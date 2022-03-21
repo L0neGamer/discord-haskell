@@ -8,41 +8,61 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Discord.Internal.Types.Interactions
-  ( Interaction (..),
-    InteractionDataComponent (..),
-    InteractionDataApplicationCommand (..),
-    InteractionDataApplicationCommandOptions (..),
-    InteractionDataApplicationCommandOptionSubcommandOrGroup (..),
-    InteractionDataApplicationCommandOptionSubcommand (..),
-    InteractionDataApplicationCommandOptionValue (..),
-    InteractionToken,
-    ResolvedData (..),
-    MemberOrUser (..),
-    InteractionResponse (..),
-    interactionResponseBasic,
-    InteractionResponseAutocomplete (..),
-    InteractionResponseMessage (..),
-    interactionResponseMessageBasic,
-    InteractionResponseMessageFlags (..),
-    InteractionResponseMessageFlag (..),
-    InteractionResponseModalData (..),
-  )
-where
+  ( Interaction(..)
+  , InteractionDataComponent(..)
+  , InteractionDataApplicationCommand(..)
+  , InteractionDataApplicationCommandOptions(..)
+  , InteractionDataApplicationCommandOptionSubcommandOrGroup(..)
+  , InteractionDataApplicationCommandOptionSubcommand(..)
+  , InteractionDataApplicationCommandOptionValue(..)
+  , InteractionToken
+  , ResolvedData(..)
+  , MemberOrUser(..)
+  , InteractionResponse(..)
+  , interactionResponseBasic
+  , InteractionResponseAutocomplete(..)
+  , InteractionResponseMessage(..)
+  , interactionResponseMessageBasic
+  , InteractionResponseMessageFlags(..)
+  , InteractionResponseMessageFlag(..)
+  , InteractionResponseModalData(..)
+  ) where
 
-import Control.Applicative (Alternative ((<|>)))
-import Control.Monad (join)
-import Data.Aeson
-import Data.Aeson.Types (Parser)
-import Data.Bits (Bits (shift, (.|.)))
-import Data.Foldable (Foldable (toList))
-import Data.Scientific (Scientific)
-import qualified Data.Text as T
-import Discord.Internal.Types.ApplicationCommands (Choice)
-import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
-import Discord.Internal.Types.Components (ComponentActionRow, ComponentTextInput)
-import Discord.Internal.Types.Embed (CreateEmbed, createEmbed)
-import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, RoleId, Snowflake, UserId)
-import Discord.Internal.Types.User (GuildMember, User)
+import           Control.Applicative            ( Alternative((<|>)) )
+import           Control.Monad                  ( join )
+import           Data.Aeson
+import           Data.Aeson.Types               ( Parser )
+import           Data.Bits                      ( Bits(shift, (.|.)) )
+import           Data.Foldable                  ( Foldable(toList) )
+import           Data.Scientific                ( Scientific )
+import qualified Data.Text                     as T
+import           Discord.Internal.Types.ApplicationCommands
+                                                ( Choice )
+import           Discord.Internal.Types.Channel ( AllowedMentions
+                                                , Attachment
+                                                , Message
+                                                )
+import           Discord.Internal.Types.Components
+                                                ( ComponentActionRow
+                                                , ComponentTextInput
+                                                )
+import           Discord.Internal.Types.Embed   ( CreateEmbed
+                                                , createEmbed
+                                                )
+import           Discord.Internal.Types.Prelude ( ApplicationCommandId
+                                                , ApplicationId
+                                                , ChannelId
+                                                , GuildId
+                                                , InteractionId
+                                                , InteractionToken
+                                                , MessageId
+                                                , RoleId
+                                                , Snowflake
+                                                , UserId
+                                                )
+import           Discord.Internal.Types.User    ( GuildMember
+                                                , User
+                                                )
 
 -- | An interaction received from discord.
 data Interaction
@@ -149,73 +169,81 @@ data Interaction
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Interaction where
-  parseJSON =
-    withObject
-      "Interaction"
-      ( \v -> do
-          iid <- v .: "id"
-          aid <- v .: "application_id"
-          gid <- v .:? "guild_id"
-          cid <- v .:? "channel_id"
-          tok <- v .: "token"
-          version <- v .: "version"
-          glocale <- v .:? "guild_locale"
-          t <- v .: "type" :: Parser Int
-          case t of
-            1 -> return $ InteractionPing iid aid tok version
-            2 ->
-              InteractionApplicationCommand iid aid
-                <$> v .: "data"
-                <*> return gid
-                <*> return cid
-                <*> parseJSON (Object v)
-                <*> return tok
-                <*> return version
-                <*> v .: "locale"
-                <*> return glocale
-            3 ->
-              InteractionComponent iid aid
-                <$> v .: "data"
-                <*> return gid
-                <*> return cid
-                <*> parseJSON (Object v)
-                <*> return tok
-                <*> return version
-                <*> v .: "message"
-                <*> v .: "locale"
-                <*> return glocale
-            4 ->
-              InteractionApplicationCommandAutocomplete iid aid
-                <$> v .: "data"
-                <*> return gid
-                <*> return cid
-                <*> parseJSON (Object v)
-                <*> return tok
-                <*> return version
-                <*> v .: "locale"
-                <*> return glocale
-            5 ->
-              InteractionModalSubmit iid aid
-                <$> v .: "data"
-                <*> return gid
-                <*> return cid
-                <*> parseJSON (Object v)
-                <*> return tok
-                <*> return version
-                <*> v .: "locale"
-                <*> return glocale
-            _ -> fail "unknown interaction type"
-      )
+  parseJSON = withObject
+    "Interaction"
+    (\v -> do
+      iid     <- v .: "id"
+      aid     <- v .: "application_id"
+      gid     <- v .:? "guild_id"
+      cid     <- v .:? "channel_id"
+      tok     <- v .: "token"
+      version <- v .: "version"
+      glocale <- v .:? "guild_locale"
+      t       <- v .: "type" :: Parser Int
+      case t of
+        1 -> return $ InteractionPing iid aid tok version
+        2 ->
+          InteractionApplicationCommand iid aid
+            <$> v
+            .:  "data"
+            <*> return gid
+            <*> return cid
+            <*> parseJSON (Object v)
+            <*> return tok
+            <*> return version
+            <*> v
+            .:  "locale"
+            <*> return glocale
+        3 ->
+          InteractionComponent iid aid
+            <$> v
+            .:  "data"
+            <*> return gid
+            <*> return cid
+            <*> parseJSON (Object v)
+            <*> return tok
+            <*> return version
+            <*> v
+            .:  "message"
+            <*> v
+            .:  "locale"
+            <*> return glocale
+        4 ->
+          InteractionApplicationCommandAutocomplete iid aid
+            <$> v
+            .:  "data"
+            <*> return gid
+            <*> return cid
+            <*> parseJSON (Object v)
+            <*> return tok
+            <*> return version
+            <*> v
+            .:  "locale"
+            <*> return glocale
+        5 ->
+          InteractionModalSubmit iid aid
+            <$> v
+            .:  "data"
+            <*> return gid
+            <*> return cid
+            <*> parseJSON (Object v)
+            <*> return tok
+            <*> return version
+            <*> v
+            .:  "locale"
+            <*> return glocale
+        _ -> fail "unknown interaction type"
+    )
 
 newtype MemberOrUser = MemberOrUser (Either GuildMember User)
   deriving (Show, Read, Eq, Ord)
 
 instance {-# OVERLAPPING #-} FromJSON MemberOrUser where
-  parseJSON =
-    withObject
-      "MemberOrUser"
-      ( \v -> MemberOrUser <$> ((Left <$> v .: "member") <|> (Right <$> v .: "user"))
-      )
+  parseJSON = withObject
+    "MemberOrUser"
+    (\v ->
+      MemberOrUser <$> ((Left <$> v .: "member") <|> (Right <$> v .: "user"))
+    )
 
 data InteractionDataComponent
   = InteractionDataComponentButton
@@ -231,19 +259,16 @@ data InteractionDataComponent
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataComponent where
-  parseJSON =
-    withObject
-      "InteractionDataComponent"
-      ( \v -> do
-          cid <- v .: "custom_id"
-          t <- v .: "component_type" :: Parser Int
-          case t of
-            2 -> return $ InteractionDataComponentButton cid
-            3 ->
-              InteractionDataComponentSelectMenu cid
-                <$> v .: "values"
-            _ -> fail "unknown interaction data component type"
-      )
+  parseJSON = withObject
+    "InteractionDataComponent"
+    (\v -> do
+      cid <- v .: "custom_id"
+      t   <- v .: "component_type" :: Parser Int
+      case t of
+        2 -> return $ InteractionDataComponentButton cid
+        3 -> InteractionDataComponentSelectMenu cid <$> v .: "values"
+        _ -> fail "unknown interaction data component type"
+    )
 
 data InteractionDataApplicationCommand
   = InteractionDataApplicationCommandUser
@@ -279,26 +304,26 @@ data InteractionDataApplicationCommand
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataApplicationCommand where
-  parseJSON =
-    withObject
-      "InteractionDataApplicationCommand"
-      ( \v -> do
-          aci <- v .: "id"
-          name <- v .: "name"
-          rd <- v .:? "resolved_data"
-          t <- v .: "type" :: Parser Int
-          case t of
-            1 ->
-              InteractionDataApplicationCommandChatInput aci name rd
-                <$> v .:? "options"
-            2 ->
-              InteractionDataApplicationCommandUser aci name rd
-                <$> v .: "target_id"
-            3 ->
-              InteractionDataApplicationCommandMessage aci name rd
-                <$> v .: "target_id"
-            _ -> fail "unknown interaction data component type"
-      )
+  parseJSON = withObject
+    "InteractionDataApplicationCommand"
+    (\v -> do
+      aci  <- v .: "id"
+      name <- v .: "name"
+      rd   <- v .:? "resolved_data"
+      t    <- v .: "type" :: Parser Int
+      case t of
+        1 ->
+          InteractionDataApplicationCommandChatInput aci name rd
+            <$> v
+            .:? "options"
+        2 ->
+          InteractionDataApplicationCommandUser aci name rd <$> v .: "target_id"
+        3 ->
+          InteractionDataApplicationCommandMessage aci name rd
+            <$> v
+            .:  "target_id"
+        _ -> fail "unknown interaction data component type"
+    )
 
 -- | Either subcommands and groups, or values.
 data InteractionDataApplicationCommandOptions
@@ -307,24 +332,26 @@ data InteractionDataApplicationCommandOptions
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataApplicationCommandOptions where
-  parseJSON =
-    withArray
-      "InteractionDataApplicationCommandOptions"
-      ( \a -> do
-          let a' = toList a
-          case a' of
-            [] -> return $ InteractionDataApplicationCommandOptionsValues []
-            (v' : _) ->
-              withObject
-                "InteractionDataApplicationCommandOptions item"
-                ( \v -> do
-                    t <- v .: "type" :: Parser Int
-                    if t == 1 || t == 2
-                      then InteractionDataApplicationCommandOptionsSubcommands <$> mapM parseJSON a'
-                      else InteractionDataApplicationCommandOptionsValues <$> mapM parseJSON a'
-                )
-                v'
-      )
+  parseJSON = withArray
+    "InteractionDataApplicationCommandOptions"
+    (\a -> do
+      let a' = toList a
+      case a' of
+        []       -> return $ InteractionDataApplicationCommandOptionsValues []
+        (v' : _) -> withObject
+          "InteractionDataApplicationCommandOptions item"
+          (\v -> do
+            t <- v .: "type" :: Parser Int
+            if t == 1 || t == 2
+              then
+                InteractionDataApplicationCommandOptionsSubcommands
+                  <$> mapM parseJSON a'
+              else
+                InteractionDataApplicationCommandOptionsValues
+                  <$> mapM parseJSON a'
+          )
+          v'
+    )
 
 -- | Either a subcommand group or a subcommand.
 data InteractionDataApplicationCommandOptionSubcommandOrGroup
@@ -337,43 +364,53 @@ data InteractionDataApplicationCommandOptionSubcommandOrGroup
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataApplicationCommandOptionSubcommandOrGroup where
-  parseJSON =
-    withObject
-      "InteractionDataApplicationCommandOptionSubcommandOrGroup"
-      ( \v -> do
-          t <- v .: "type" :: Parser Int
-          case t of
-            2 ->
-              InteractionDataApplicationCommandOptionSubcommandGroup
-                <$> v .: "name"
-                <*> v .: "options"
-                <*> v .:? "focused" .!= False
-            1 -> InteractionDataApplicationCommandOptionSubcommandOrGroupSubcommand <$> parseJSON (Object v)
-            _ -> fail "unexpected subcommand group type"
-      )
+  parseJSON = withObject
+    "InteractionDataApplicationCommandOptionSubcommandOrGroup"
+    (\v -> do
+      t <- v .: "type" :: Parser Int
+      case t of
+        2 ->
+          InteractionDataApplicationCommandOptionSubcommandGroup
+            <$> v
+            .:  "name"
+            <*> v
+            .:  "options"
+            <*> v
+            .:? "focused"
+            .!= False
+        1 -> InteractionDataApplicationCommandOptionSubcommandOrGroupSubcommand
+          <$> parseJSON (Object v)
+        _ -> fail "unexpected subcommand group type"
+    )
 
 -- | Data for a single subcommand.
-data InteractionDataApplicationCommandOptionSubcommand = InteractionDataApplicationCommandOptionSubcommand
-  { interactionDataApplicationCommandOptionSubcommandName :: T.Text,
-    interactionDataApplicationCommandOptionSubcommandOptions :: [InteractionDataApplicationCommandOptionValue],
-    interactionDataApplicationCommandOptionSubcommandFocused :: Bool
-  }
+data InteractionDataApplicationCommandOptionSubcommand
+  = InteractionDataApplicationCommandOptionSubcommand
+    { interactionDataApplicationCommandOptionSubcommandName :: T.Text
+    , interactionDataApplicationCommandOptionSubcommandOptions
+        :: [InteractionDataApplicationCommandOptionValue]
+    , interactionDataApplicationCommandOptionSubcommandFocused :: Bool
+    }
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataApplicationCommandOptionSubcommand where
-  parseJSON =
-    withObject
-      "InteractionDataApplicationCommandOptionSubcommand"
-      ( \v -> do
-          t <- v .: "type" :: Parser Int
-          case t of
-            1 ->
-              InteractionDataApplicationCommandOptionSubcommand
-                <$> v .: "name"
-                <*> v .:? "options" .!= []
-                <*> v .:? "focused" .!= False
-            _ -> fail "unexpected subcommand type"
-      )
+  parseJSON = withObject
+    "InteractionDataApplicationCommandOptionSubcommand"
+    (\v -> do
+      t <- v .: "type" :: Parser Int
+      case t of
+        1 ->
+          InteractionDataApplicationCommandOptionSubcommand
+            <$> v
+            .:  "name"
+            <*> v
+            .:? "options"
+            .!= []
+            <*> v
+            .:? "focused"
+            .!= False
+        _ -> fail "unexpected subcommand type"
+    )
 
 -- | Data for a single value.
 data InteractionDataApplicationCommandOptionValue
@@ -412,67 +449,72 @@ data InteractionDataApplicationCommandOptionValue
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataApplicationCommandOptionValue where
-  parseJSON =
-    withObject
-      "InteractionDataApplicationCommandOptionValue"
-      ( \v -> do
-          name <- v .: "name"
-          focused <- v .:? "focused" .!= False
-          t <- v .: "type" :: Parser Int
-          case t of
-            3 ->
-              InteractionDataApplicationCommandOptionValueString name
-                <$> parseValue v focused
-            4 ->
-              InteractionDataApplicationCommandOptionValueInteger name
-                <$> parseValue v focused
-            10 ->
-              InteractionDataApplicationCommandOptionValueNumber name
-                <$> parseValue v focused
-            5 ->
-              InteractionDataApplicationCommandOptionValueBoolean name
-                <$> v .: "value"
-            6 ->
-              InteractionDataApplicationCommandOptionValueUser name
-                <$> v .: "value"
-            7 ->
-              InteractionDataApplicationCommandOptionValueChannel name
-                <$> v .: "value"
-            8 ->
-              InteractionDataApplicationCommandOptionValueRole name
-                <$> v .: "value"
-            9 ->
-              InteractionDataApplicationCommandOptionValueMentionable name
-                <$> v .: "value"
-            _ -> fail $ "unexpected interaction data application command option value type: " ++ show t
-      )
+  parseJSON = withObject
+    "InteractionDataApplicationCommandOptionValue"
+    (\v -> do
+      name    <- v .: "name"
+      focused <- v .:? "focused" .!= False
+      t       <- v .: "type" :: Parser Int
+      case t of
+        3 ->
+          InteractionDataApplicationCommandOptionValueString name
+            <$> parseValue v focused
+        4 ->
+          InteractionDataApplicationCommandOptionValueInteger name
+            <$> parseValue v focused
+        10 ->
+          InteractionDataApplicationCommandOptionValueNumber name
+            <$> parseValue v focused
+        5 ->
+          InteractionDataApplicationCommandOptionValueBoolean name
+            <$> v
+            .:  "value"
+        6 ->
+          InteractionDataApplicationCommandOptionValueUser name <$> v .: "value"
+        7 ->
+          InteractionDataApplicationCommandOptionValueChannel name
+            <$> v
+            .:  "value"
+        8 ->
+          InteractionDataApplicationCommandOptionValueRole name <$> v .: "value"
+        9 ->
+          InteractionDataApplicationCommandOptionValueMentionable name
+            <$> v
+            .:  "value"
+        _ ->
+          fail
+            $ "unexpected interaction data application command option value type: "
+            ++ show t
+    )
 
 data InteractionDataModal = InteractionDataModal
   { -- | The unique id of the component (up to 100 characters).
-    interactionDataModalCustomId :: T.Text,
+    interactionDataModalCustomId   :: T.Text
+  ,
     -- | Components from the modal.
     interactionDataModalComponents :: [ComponentTextInput]
   }
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataModal where
-  parseJSON =
-    withObject
-      "InteractionDataModal"
-      ( \v ->
-          InteractionDataModal <$> v .: "custom_id"
-            <*> ((v .: "components") >>= (join <$>) . mapM getTextInput)
-      )
-    where
-      getTextInput :: Value -> Parser [ComponentTextInput]
-      getTextInput = withObject "InteractionDataModal.TextInput" $ \o -> do
-        t <- o .: "type" :: Parser Int
-        case t of
-          1 -> o .: "components"
-          _ -> fail $ "expected action row type (1), got: " ++ show t
+  parseJSON = withObject
+    "InteractionDataModal"
+    (\v ->
+      InteractionDataModal
+        <$> v
+        .:  "custom_id"
+        <*> ((v .: "components") >>= (join <$>) . mapM getTextInput)
+    )
+   where
+    getTextInput :: Value -> Parser [ComponentTextInput]
+    getTextInput = withObject "InteractionDataModal.TextInput" $ \o -> do
+      t <- o .: "type" :: Parser Int
+      case t of
+        1 -> o .: "components"
+        _ -> fail $ "expected action row type (1), got: " ++ show t
 
 parseValue :: (FromJSON a) => Object -> Bool -> Parser (Either T.Text a)
-parseValue o True = Left <$> o .: "value"
+parseValue o True  = Left <$> o .: "value"
 parseValue o False = Right <$> o .: "value"
 
 -- resolved data -- this should be formalised and integrated, instead of being
@@ -485,42 +527,46 @@ parseValue o False = Right <$> o .: "value"
 --
 -- https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure
 data ResolvedData = ResolvedData
-  { resolvedDataUsers :: Maybe Value,
-    resolvedDataMembers :: Maybe Value,
-    resolvedDataRoles :: Maybe Value,
-    resolvedDataChannels :: Maybe Value,
-    resolvedDataMessages :: Maybe Value,
-    resolvedDataAttachments :: Maybe Value
+  { resolvedDataUsers       :: Maybe Value
+  , resolvedDataMembers     :: Maybe Value
+  , resolvedDataRoles       :: Maybe Value
+  , resolvedDataChannels    :: Maybe Value
+  , resolvedDataMessages    :: Maybe Value
+  , resolvedDataAttachments :: Maybe Value
   }
   deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ResolvedData where
-  toJSON ResolvedData {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("users", resolvedDataUsers),
-              ("members", resolvedDataMembers),
-              ("roles", resolvedDataRoles),
-              ("channels", resolvedDataChannels),
-              ("messages", resolvedDataMessages),
-              ("attachments", resolvedDataAttachments)
-            ]
+  toJSON ResolvedData {..} = object
+    [ (name, value)
+    | (name, Just value) <-
+      [ ("users"      , resolvedDataUsers)
+      , ("members"    , resolvedDataMembers)
+      , ("roles"      , resolvedDataRoles)
+      , ("channels"   , resolvedDataChannels)
+      , ("messages"   , resolvedDataMessages)
+      , ("attachments", resolvedDataAttachments)
       ]
+    ]
 
 instance FromJSON ResolvedData where
-  parseJSON =
-    withObject
-      "ResolvedData"
-      ( \v ->
-          ResolvedData
-            <$> v .:? "users"
-            <*> v .:? "members"
-            <*> v .:? "roles"
-            <*> v .:? "channels"
-            <*> v .:? "messages"
-            <*> v .:? "attachments"
-      )
+  parseJSON = withObject
+    "ResolvedData"
+    (\v ->
+      ResolvedData
+        <$> v
+        .:? "users"
+        <*> v
+        .:? "members"
+        <*> v
+        .:? "roles"
+        <*> v
+        .:? "channels"
+        <*> v
+        .:? "messages"
+        <*> v
+        .:? "attachments"
+    )
 
 -- | The data to respond to an interaction with. Unless specified otherwise, you
 -- only have three seconds to reply to an interaction before a failure state is
@@ -544,56 +590,73 @@ data InteractionResponse
 
 -- | A basic interaction response, sending back the given text.
 interactionResponseBasic :: T.Text -> InteractionResponse
-interactionResponseBasic t = InteractionResponseChannelMessage (interactionResponseMessageBasic t)
+interactionResponseBasic t =
+  InteractionResponseChannelMessage (interactionResponseMessageBasic t)
 
 instance ToJSON InteractionResponse where
-  toJSON InteractionResponsePong = object [("type", Number 1)]
+  toJSON InteractionResponsePong                = object [("type", Number 1)]
   toJSON InteractionResponseDeferChannelMessage = object [("type", Number 5)]
-  toJSON InteractionResponseDeferUpdateMessage = object [("type", Number 6)]
-  toJSON (InteractionResponseChannelMessage ms) = object [("type", Number 4), ("data", toJSON ms)]
-  toJSON (InteractionResponseUpdateMessage ms) = object [("type", Number 7), ("data", toJSON ms)]
-  toJSON (InteractionResponseAutocompleteResult ms) = object [("type", Number 8), ("data", toJSON ms)]
-  toJSON (InteractionResponseModal ms) = object [("type", Number 9), ("data", toJSON ms)]
+  toJSON InteractionResponseDeferUpdateMessage  = object [("type", Number 6)]
+  toJSON (InteractionResponseChannelMessage ms) =
+    object [("type", Number 4), ("data", toJSON ms)]
+  toJSON (InteractionResponseUpdateMessage ms) =
+    object [("type", Number 7), ("data", toJSON ms)]
+  toJSON (InteractionResponseAutocompleteResult ms) =
+    object [("type", Number 8), ("data", toJSON ms)]
+  toJSON (InteractionResponseModal ms) =
+    object [("type", Number 9), ("data", toJSON ms)]
 
 data InteractionResponseAutocomplete = InteractionResponseAutocompleteString [Choice T.Text] | InteractionResponseAutocompleteInteger [Choice Integer] | InteractionResponseAutocompleteNumber [Choice Scientific]
   deriving (Show, Read, Eq, Ord)
 
 instance ToJSON InteractionResponseAutocomplete where
-  toJSON (InteractionResponseAutocompleteString cs) = object [("choices", toJSON cs)]
-  toJSON (InteractionResponseAutocompleteInteger cs) = object [("choices", toJSON cs)]
-  toJSON (InteractionResponseAutocompleteNumber cs) = object [("choices", toJSON cs)]
+  toJSON (InteractionResponseAutocompleteString cs) =
+    object [("choices", toJSON cs)]
+  toJSON (InteractionResponseAutocompleteInteger cs) =
+    object [("choices", toJSON cs)]
+  toJSON (InteractionResponseAutocompleteNumber cs) =
+    object [("choices", toJSON cs)]
 
 -- | A cut down message structure.
 data InteractionResponseMessage = InteractionResponseMessage
-  { interactionResponseMessageTTS :: Maybe Bool,
-    interactionResponseMessageContent :: Maybe T.Text,
-    interactionResponseMessageEmbeds :: Maybe [CreateEmbed],
-    interactionResponseMessageAllowedMentions :: Maybe AllowedMentions,
-    interactionResponseMessageFlags :: Maybe InteractionResponseMessageFlags,
-    interactionResponseMessageComponents :: Maybe [ComponentActionRow],
-    interactionResponseMessageAttachments :: Maybe [Attachment]
+  { interactionResponseMessageTTS             :: Maybe Bool
+  , interactionResponseMessageContent         :: Maybe T.Text
+  , interactionResponseMessageEmbeds          :: Maybe [CreateEmbed]
+  , interactionResponseMessageAllowedMentions :: Maybe AllowedMentions
+  , interactionResponseMessageFlags :: Maybe InteractionResponseMessageFlags
+  , interactionResponseMessageComponents      :: Maybe [ComponentActionRow]
+  , interactionResponseMessageAttachments     :: Maybe [Attachment]
   }
   deriving (Show, Read, Eq, Ord)
 
 -- | A basic interaction response, sending back the given text. This is
 -- effectively a helper function.
 interactionResponseMessageBasic :: T.Text -> InteractionResponseMessage
-interactionResponseMessageBasic t = InteractionResponseMessage Nothing (Just t) Nothing Nothing Nothing Nothing Nothing
+interactionResponseMessageBasic t = InteractionResponseMessage Nothing
+                                                               (Just t)
+                                                               Nothing
+                                                               Nothing
+                                                               Nothing
+                                                               Nothing
+                                                               Nothing
 
 instance ToJSON InteractionResponseMessage where
-  toJSON InteractionResponseMessage {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("tts", toJSON <$> interactionResponseMessageTTS),
-              ("content", toJSON <$> interactionResponseMessageContent),
-              ("embeds", toJSON . (createEmbed <$>) <$> interactionResponseMessageEmbeds),
-              ("allowed_mentions", toJSON <$> interactionResponseMessageAllowedMentions),
-              ("flags", toJSON <$> interactionResponseMessageFlags),
-              ("components", toJSON <$> interactionResponseMessageComponents),
-              ("attachments", toJSON <$> interactionResponseMessageAttachments)
-            ]
+  toJSON InteractionResponseMessage {..} = object
+    [ (name, value)
+    | (name, Just value) <-
+      [ ("tts"    , toJSON <$> interactionResponseMessageTTS)
+      , ("content", toJSON <$> interactionResponseMessageContent)
+      , ( "embeds"
+        , toJSON . (createEmbed <$>) <$> interactionResponseMessageEmbeds
+        )
+      , ( "allowed_mentions"
+        , toJSON <$> interactionResponseMessageAllowedMentions
+        )
+      , ("flags"      , toJSON <$> interactionResponseMessageFlags)
+      , ("components" , toJSON <$> interactionResponseMessageComponents)
+      , ("attachments", toJSON <$> interactionResponseMessageAttachments)
       ]
+    ]
 
 -- | Types of flags to attach to the interaction message.
 --
@@ -608,23 +671,29 @@ newtype InteractionResponseMessageFlags = InteractionResponseMessageFlags [Inter
 instance Enum InteractionResponseMessageFlag where
   fromEnum InteractionResponseMessageFlagEphermeral = 1 `shift` 6
   toEnum i
-    | i == 1 `shift` 6 = InteractionResponseMessageFlagEphermeral
-    | otherwise = error $ "could not find InteractionCallbackDataFlag `" ++ show i ++ "`"
+    | i == 1 `shift` 6
+    = InteractionResponseMessageFlagEphermeral
+    | otherwise
+    = error $ "could not find InteractionCallbackDataFlag `" ++ show i ++ "`"
 
 instance ToJSON InteractionResponseMessageFlags where
-  toJSON (InteractionResponseMessageFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromEnum <$> fs)
+  toJSON (InteractionResponseMessageFlags fs) =
+    Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromEnum <$> fs)
 
 data InteractionResponseModalData = InteractionResponseModalData
-  { interactionResponseModalCustomId :: T.Text,
-    interactionResponseModalTitle :: T.Text,
-    interactionResponseModalComponents :: [ComponentTextInput]
+  { interactionResponseModalCustomId   :: T.Text
+  , interactionResponseModalTitle      :: T.Text
+  , interactionResponseModalComponents :: [ComponentTextInput]
   }
   deriving (Show, Read, Eq, Ord)
 
 instance ToJSON InteractionResponseModalData where
-  toJSON InteractionResponseModalData {..} =
-    object
-      [ ("custom_id", toJSON interactionResponseModalCustomId),
-        ("title", toJSON interactionResponseModalTitle),
-        ("components", toJSON $ map (\ti -> object [("type", Number 1), ("components", toJSON [ti])]) interactionResponseModalComponents)
-      ]
+  toJSON InteractionResponseModalData {..} = object
+    [ ("custom_id", toJSON interactionResponseModalCustomId)
+    , ("title"    , toJSON interactionResponseModalTitle)
+    , ( "components"
+      , toJSON $ map
+        (\ti -> object [("type", Number 1), ("components", toJSON [ti])])
+        interactionResponseModalComponents
+      )
+    ]

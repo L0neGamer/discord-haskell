@@ -560,7 +560,10 @@ instance FromJSON ScheduledEventUser where
     "ScheduledEventUser"
     (\v ->
       ScheduledEventUser
-        <$> v .:  "guild_scheduled_event_id"
-        <*> v .:  "user"
-        <*> v .:? "member"
+        <$> v
+        .:  "guild_scheduled_event_id"
+        <*> v
+        .:  "user"
+        <*> v
+        .:? "member"
     )

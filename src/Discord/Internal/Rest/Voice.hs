@@ -1,7 +1,5 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides actions for Voice API interactions
@@ -10,27 +8,27 @@ module Discord.Internal.Rest.Voice
   ) where
 
 
-import Network.HTTP.Req ((/:))
-import qualified Network.HTTP.Req as R
+import           Network.HTTP.Req               ( (/:) )
+import qualified Network.HTTP.Req              as R
 
-import Discord.Internal.Rest.Prelude
-import Discord.Internal.Types
+import           Discord.Internal.Rest.Prelude
+import           Discord.Internal.Types
 
 instance Request (VoiceRequest a) where
-  majorRoute = voiceMajorRoute
+  majorRoute  = voiceMajorRoute
   jsonRequest = voiceJsonRequest
 
 -- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
 data VoiceRequest a where
-  ListVoiceRegions :: VoiceRequest [VoiceRegion]
+  ListVoiceRegions ::VoiceRequest [VoiceRegion]
 
 voiceMajorRoute :: VoiceRequest a -> String
 voiceMajorRoute c = case c of
-  (ListVoiceRegions) -> "whatever "
+  ListVoiceRegions -> "whatever "
 
 voices :: R.Url 'R.Https
 voices = baseUrl /: "voice"
 
 voiceJsonRequest :: VoiceRequest r -> JsonRequest
 voiceJsonRequest c = case c of
-  (ListVoiceRegions) -> Get (voices /: "regions") mempty
+  ListVoiceRegions -> Get (voices /: "regions") mempty

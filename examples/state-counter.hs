@@ -1,50 +1,62 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-import Control.Monad (when, void, forever)
-import Control.Concurrent (forkIO, killThread)
-import Control.Concurrent.Chan
-import Control.Concurrent.MVar
-import UnliftIO (liftIO, try, IOException)
-import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
+import           Control.Concurrent             ( forkIO
+                                                , killThread
+                                                )
+import           Control.Concurrent.Chan
+import           Control.Concurrent.MVar
+import           Control.Monad                  ( forever
+                                                , void
+                                                , when
+                                                )
+import qualified Data.Text                     as T
+import qualified Data.Text.IO                  as TIO
+import           UnliftIO                       ( IOException
+                                                , liftIO
+                                                , try
+                                                )
 
-import Discord
-import Discord.Types
-import qualified Discord.Requests as R
+import           Discord
+import qualified Discord.Requests              as R
+import           Discord.Types
 
-data State = State { pingCount :: Integer }
+data State = State
+  { pingCount :: Integer
+  }
   deriving (Show, Read, Eq, Ord)
 
 -- | Counts how many pings we've seen across sessions
 stateExample :: IO ()
 stateExample = do
-  tok <- TIO.readFile "./examples/auth-token.secret"
+  tok                   <- TIO.readFile "./examples/auth-token.secret"
 
   -- eventHandler is called concurrently, need to sync stdout
-  printQueue <- newChan :: IO (Chan T.Text)
+  printQueue            <- newChan :: IO (Chan T.Text)
   threadId <- forkIO $ forever $ readChan printQueue >>= TIO.putStrLn
 
   -- try to read previous state, otherwise use 0
   state :: MVar (State) <- do
-        mfile <- try $ read . T.unpack <$> TIO.readFile "./cachedState"
-        s <- case mfile of
-            Right file -> do
-                    writeChan printQueue "loaded state from file"
-                    pure file
-            Left (_ :: IOException) -> do
-                    writeChan printQueue "created new state"
-                    pure $ State { pingCount = 0 }
-        newMVar s
+    mfile <- try $ read . T.unpack <$> TIO.readFile "./cachedState"
+    s     <- case mfile of
+      Right file -> do
+        writeChan printQueue "loaded state from file"
+        pure file
+      Left (_ :: IOException) -> do
+        writeChan printQueue "created new state"
+        pure $ State { pingCount = 0 }
+    newMVar s
 
-  t <- runDiscord $ def { discordToken = tok
-                        , discordOnStart = liftIO $ writeChan printQueue "starting ping loop"
-                        , discordOnEvent = eventHandler state printQueue
-                        , discordOnEnd = do killThread threadId
-                                            --
-                                            s <- readMVar state
-                                            TIO.writeFile "./cachedState" (T.pack (show s))
-                        }
+  t <- runDiscord $ def
+    { discordToken   = tok
+    , discordOnStart = liftIO $ writeChan printQueue "starting ping loop"
+    , discordOnEvent = eventHandler state printQueue
+    , discordOnEnd   = do
+                         killThread threadId
+                         --
+                         s <- readMVar state
+                         TIO.writeFile "./cachedState" (T.pack (show s))
+    }
   TIO.putStrLn t
 
 
@@ -56,7 +68,10 @@ eventHandler state printQueue event = case event of
 
     s <- liftIO $ takeMVar state
 
-    void $ restCall (R.CreateMessage (messageChannelId m) (T.pack ("Pong #" <> show (pingCount s))))
+    void $ restCall
+      (R.CreateMessage (messageChannelId m)
+                       (T.pack ("Pong #" <> show (pingCount s)))
+      )
 
     liftIO $ putMVar state $ State { pingCount = pingCount s + 1 }
 

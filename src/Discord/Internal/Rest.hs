@@ -13,40 +13,58 @@ module Discord.Internal.Rest
   , RestCallInternalException(..)
   ) where
 
-import Prelude hiding (log)
-import Data.Aeson (FromJSON, eitherDecode)
-import Control.Concurrent.Chan
-import Control.Concurrent.MVar
-import Control.Concurrent (forkIO, ThreadId)
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.Text as T
+import           Control.Concurrent             ( ThreadId
+                                                , forkIO
+                                                )
+import           Control.Concurrent.Chan
+import           Control.Concurrent.MVar
+import           Data.Aeson                     ( FromJSON
+                                                , eitherDecode
+                                                )
+import qualified Data.ByteString.Lazy          as BL
+import qualified Data.Text                     as T
+import           Prelude                 hiding ( log )
 
 
-import Discord.Internal.Types
-import Discord.Internal.Rest.HTTP
+import           Discord.Internal.Rest.HTTP
+import           Discord.Internal.Types
 
-data RestChanHandle = RestChanHandle
-      { restHandleChan :: Chan (String, JsonRequest, MVar (Either RestCallInternalException BL.ByteString))
-      }
+newtype RestChanHandle = RestChanHandle
+  { restHandleChan
+      :: Chan
+        ( String
+        , JsonRequest
+        , MVar (Either RestCallInternalException BL.ByteString)
+        )
+  }
 
 -- | Starts the http request thread. Please only call this once
 startRestThread :: Auth -> Chan T.Text -> IO (RestChanHandle, ThreadId)
 startRestThread auth log = do
-  c <- newChan
+  c   <- newChan
   tid <- forkIO $ restLoop auth c log
   pure (RestChanHandle c, tid)
 
 -- | Execute a request blocking until a response is received
-writeRestCall :: (Request (r a), FromJSON a) => RestChanHandle -> r a -> IO (Either RestCallInternalException a)
+writeRestCall
+  :: (Request (r a), FromJSON a)
+  => RestChanHandle
+  -> r a
+  -> IO (Either RestCallInternalException a)
 writeRestCall c req = do
   m <- newEmptyMVar
   writeChan (restHandleChan c) (majorRoute req, jsonRequest req, m)
   r <- readMVar m
   pure $ case eitherDecode <$> r of
-    Right (Right o) -> Right o
-    (Right (Left er)) -> Left (RestCallInternalNoParse er (case r of
-      Right x -> x
-      Left _ -> ""))
+    Right (Right o)   -> Right o
+    (Right (Left er)) -> Left
+      (RestCallInternalNoParse
+        er
+        (case r of
+          Right x -> x
+          Left  _ -> ""
+        )
+      )
     Left e -> Left e
 
 

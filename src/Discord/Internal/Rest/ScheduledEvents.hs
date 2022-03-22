@@ -4,15 +4,15 @@
 
 -- | Provides actions for Scheduled Event API
 module Discord.Internal.Rest.ScheduledEvents
-    ( ScheduledEventRequest(..)
-    ) where
+  ( ScheduledEventRequest(..)
+  ) where
 import           Data.Aeson                     ( ToJSON(toJSON) )
 import           Discord.Internal.Rest.Prelude  ( (//)
                                                 , JsonRequest(..)
                                                 , Request
-                                                    ( jsonRequest
-                                                    , majorRoute
-                                                    )
+                                                  ( jsonRequest
+                                                  , majorRoute
+                                                  )
                                                 , baseUrl
                                                 )
 import           Discord.Internal.Types.Prelude ( GuildId
@@ -59,16 +59,14 @@ sevEndpoint :: GuildId -> R.Url 'R.Https
 sevEndpoint gid = baseUrl /: "guilds" // gid /: "scheduled-events"
 
 instance Request (ScheduledEventRequest a) where
-    majorRoute = const "scheduledEvent"
-    jsonRequest rq = case rq of
-        ListScheduledEvents gid  -> Get (sevEndpoint gid) mempty
-        GetScheduledEvent gid ev -> Get (sevEndpoint gid // ev) mempty
-        CreateScheduledEvent gid ev ->
-            Post (sevEndpoint gid) (pure $ R.ReqBodyJson $ toJSON ev) mempty
-        ModifyScheduledEvent gid evi ev -> Patch
-            (sevEndpoint gid // evi)
-            (pure $ R.ReqBodyJson $ toJSON ev)
-            mempty
-        DeleteScheduledEvent gid evi -> Delete (sevEndpoint gid // evi) mempty
-        GetScheduledEventUsers gid evi ->
-            Get (sevEndpoint gid // evi /: "users") mempty
+  majorRoute = const "scheduledEvent"
+  jsonRequest rq = case rq of
+    ListScheduledEvents gid  -> Get (sevEndpoint gid) mempty
+    GetScheduledEvent gid ev -> Get (sevEndpoint gid // ev) mempty
+    CreateScheduledEvent gid ev ->
+      Post (sevEndpoint gid) (pure $ R.ReqBodyJson $ toJSON ev) mempty
+    ModifyScheduledEvent gid evi ev ->
+      Patch (sevEndpoint gid // evi) (pure $ R.ReqBodyJson $ toJSON ev) mempty
+    DeleteScheduledEvent gid evi -> Delete (sevEndpoint gid // evi) mempty
+    GetScheduledEventUsers gid evi ->
+      Get (sevEndpoint gid // evi /: "users") mempty

@@ -3,13 +3,11 @@ module Discord.Types
   ( module Discord.Internal.Types
   ) where
 
-import Discord.Internal.Types hiding
-    ( GatewaySendableInternal(..)
-    , GatewayReceivable(..)
-    , EventInternalParse(..)
-    , InternalDiscordEnum(..)
-
-    , colorToInternal
-    , convertToRGB
-    , hexToRGB
-    )
+import           Discord.Internal.Types  hiding ( EventInternalParse(..)
+                                                , GatewayReceivable(..)
+                                                , GatewaySendableInternal(..)
+                                                , InternalDiscordEnum(..)
+                                                , colorToInternal
+                                                , convertToRGB
+                                                , hexToRGB
+                                                )

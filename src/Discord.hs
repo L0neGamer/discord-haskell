@@ -17,13 +17,12 @@ module Discord
   , def
   ) where
 
-import           Prelude                 hiding ( log )
 import           Control.Monad.Reader           ( ReaderT
+                                                , ask
+                                                , forever
+                                                , liftIO
                                                 , runReaderT
                                                 , void
-                                                , ask
-                                                , liftIO
-                                                , forever
                                                 )
 import           Data.Aeson                     ( FromJSON )
 import           Data.Default                   ( Default
@@ -32,19 +31,20 @@ import           Data.Default                   ( Default
 import           Data.IORef                     ( writeIORef )
 import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as TE
+import           Prelude                 hiding ( log )
 
-import           UnliftIO                       ( race
-                                                , try
-                                                , finally
+import           UnliftIO                       ( IOException
                                                 , SomeException
-                                                , IOException
+                                                , finally
+                                                , race
+                                                , try
                                                 )
 import           UnliftIO.Concurrent
 
 import           Discord.Handle
+import           Discord.Internal.Gateway
 import           Discord.Internal.Rest
 import           Discord.Internal.Rest.User     ( UserRequest(GetCurrentUser) )
-import           Discord.Internal.Gateway
 
 type DiscordHandler = ReaderT DiscordHandle IO
 

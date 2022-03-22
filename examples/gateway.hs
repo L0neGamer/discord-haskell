@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import           Control.Monad                  ( forever )
 import           Control.Concurrent             ( forkIO
                                                 , killThread
                                                 )
-import           UnliftIO                       ( liftIO )
 import           Control.Concurrent.Chan
+import           Control.Monad                  ( forever )
 import qualified Data.Text.IO                  as TIO
+import           UnliftIO                       ( liftIO )
 
 import           Discord
 import           Discord.Types

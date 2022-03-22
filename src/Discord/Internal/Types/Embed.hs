@@ -6,19 +6,19 @@
 module Discord.Internal.Types.Embed where
 
 import           Data.Aeson
-import           Data.Time.Clock
+import qualified Data.ByteString               as B
 import           Data.Default                   ( Default
                                                 , def
                                                 )
-import qualified Data.Text                     as T
-import qualified Data.ByteString               as B
 import           Data.Functor                   ( (<&>) )
+import qualified Data.Text                     as T
+import           Data.Time.Clock
 
+import           Network.HTTP.Client            ( RequestBody(RequestBodyBS) )
 import           Network.HTTP.Client.MultipartFormData
                                                 ( PartM
                                                 , partFileRequestBody
                                                 )
-import           Network.HTTP.Client            ( RequestBody(RequestBodyBS) )
 
 import           Discord.Internal.Types.Color   ( DiscordColor )
 

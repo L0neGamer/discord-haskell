@@ -8,21 +8,21 @@ module Discord.Internal.Types.Gateway where
 
 import           System.Info
 
-import qualified Data.Text                     as T
-import           Data.Time                      ( UTCTime )
-import           Data.Time.Clock.POSIX          ( utcTimeToPOSIXSeconds )
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.Default                   ( Default
                                                 , def
                                                 )
-import           Data.Maybe                     ( fromMaybe )
 import           Data.Functor
+import           Data.Maybe                     ( fromMaybe )
+import qualified Data.Text                     as T
+import           Data.Time                      ( UTCTime )
+import           Data.Time.Clock.POSIX          ( utcTimeToPOSIXSeconds )
 import           Text.Read                      ( readMaybe )
 
-import           Discord.Internal.Types.Prelude
 import           Discord.Internal.Types.Events
 import           Discord.Internal.Types.Guild   ( Activity(..) )
+import           Discord.Internal.Types.Prelude
 
 -- | Sent by gateway
 data GatewayReceivable

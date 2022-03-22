@@ -3,15 +3,15 @@
 -- | Query info about connected Guilds and Channels
 module Discord.Internal.Gateway.Cache where
 
-import           Prelude                 hiding ( log )
-import           Control.Monad                  ( forever )
-import           Control.Concurrent.MVar
 import           Control.Concurrent.Chan
+import           Control.Concurrent.MVar
+import           Control.Monad                  ( forever )
 import qualified Data.Map.Strict               as M
 import qualified Data.Text                     as T
+import           Prelude                 hiding ( log )
 
-import           Discord.Internal.Types
 import           Discord.Internal.Gateway.EventLoop
+import           Discord.Internal.Types
 
 data Cache = Cache
   { cacheCurrentUser :: User

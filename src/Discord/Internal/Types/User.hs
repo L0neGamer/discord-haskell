@@ -7,8 +7,8 @@ module Discord.Internal.Types.User where
 import           Data.Aeson
 import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
-import           Discord.Internal.Types.Prelude
 import           Data.Time                      ( UTCTime )
+import           Discord.Internal.Types.Prelude
 
 -- | Represents information about a user.
 data User = User

@@ -5,23 +5,23 @@ module Discord.Internal.Types.Events where
 
 import           Prelude                 hiding ( id )
 
-import           Data.Time.ISO8601              ( parseISO8601 )
 import           Data.Time                      ( UTCTime )
 import           Data.Time.Clock.POSIX          ( posixSecondsToUTCTime )
+import           Data.Time.ISO8601              ( parseISO8601 )
 
 import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.Text                     as T
 
-import           Discord.Internal.Types.Prelude
 import           Discord.Internal.Types.Channel
+import           Discord.Internal.Types.Emoji   ( Emoji )
 import           Discord.Internal.Types.Guild
-import           Discord.Internal.Types.User    ( User
-                                                , GuildMember
-                                                )
 import           Discord.Internal.Types.Interactions
                                                 ( Interaction )
-import           Discord.Internal.Types.Emoji   ( Emoji )
+import           Discord.Internal.Types.Prelude
+import           Discord.Internal.Types.User    ( GuildMember
+                                                , User
+                                                )
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discord.com/developers/docs/topics/gateway.

@@ -7,9 +7,9 @@ module Discord.Internal.Rest.Invite
   ( InviteRequest(..)
   ) where
 
+import qualified Data.Text                     as T
 import           Network.HTTP.Req               ( (/:) )
 import qualified Network.HTTP.Req              as R
-import qualified Data.Text                     as T
 
 import           Discord.Internal.Rest.Prelude
 import           Discord.Internal.Types

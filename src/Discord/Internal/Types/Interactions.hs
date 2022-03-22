@@ -32,7 +32,7 @@ import           Control.Applicative            ( Alternative((<|>)) )
 import           Control.Monad                  ( join )
 import           Data.Aeson
 import           Data.Aeson.Types               ( Parser )
-import           Data.Bits                      ( Bits(shift, (.|.)) )
+import           Data.Bits                      ( Bits((.|.), shift) )
 import           Data.Foldable                  ( Foldable(toList) )
 import           Data.Scientific                ( Scientific )
 import qualified Data.Text                     as T

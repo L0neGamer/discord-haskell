@@ -9,13 +9,13 @@ import           Data.Aeson                     ( Value )
 import           Discord.Internal.Rest.Prelude
 import           Discord.Internal.Types
 import           Discord.Internal.Types.ApplicationCommands
-                                                ( ApplicationCommandPermissions
+                                                ( ApplicationCommand
+                                                , ApplicationCommandPermissions
+                                                , CreateApplicationCommand
+                                                , EditApplicationCommand
                                                 , GuildApplicationCommandPermissions
                                                   ( GuildApplicationCommandPermissions
                                                   )
-                                                , EditApplicationCommand
-                                                , CreateApplicationCommand
-                                                , ApplicationCommand
                                                 )
 import           Network.HTTP.Req              as R
 

@@ -1,25 +1,25 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-import           Control.Monad                  ( when
-                                                , void
-                                                , forever
-                                                )
 import           Control.Concurrent             ( forkIO
                                                 , killThread
                                                 )
 import           Control.Concurrent.Chan
 import           Control.Concurrent.MVar
-import           UnliftIO                       ( liftIO
-                                                , try
-                                                , IOException
+import           Control.Monad                  ( forever
+                                                , void
+                                                , when
                                                 )
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
+import           UnliftIO                       ( IOException
+                                                , liftIO
+                                                , try
+                                                )
 
 import           Discord
-import           Discord.Types
 import qualified Discord.Requests              as R
+import           Discord.Types
 
 data State = State
   { pingCount :: Integer

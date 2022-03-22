@@ -11,17 +11,17 @@ import           Data.Bits
 import           Data.Word
 
 import           Data.Aeson.Types
-import           Data.Time.Clock
 import qualified Data.Text                     as T
+import           Data.Time.Clock
 import           Data.Time.Clock.POSIX
 
-import           Data.Functor.Compose           ( Compose(Compose, getCompose) )
 import           Data.Bifunctor                 ( first )
-import           Text.Read                      ( readMaybe )
 import           Data.Data                      ( Data(dataTypeOf)
                                                 , dataTypeConstrs
                                                 , fromConstr
                                                 )
+import           Data.Functor.Compose           ( Compose(Compose, getCompose) )
+import           Text.Read                      ( readMaybe )
 
 -- | Authorization token for the Discord API
 newtype Auth = Auth T.Text

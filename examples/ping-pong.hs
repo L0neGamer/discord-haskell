@@ -1,8 +1,9 @@
-{-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
+{-# LANGUAGE OverloadedStrings #-}
+  -- allows "strings" to be Data.Text
 
-import           Control.Monad                  ( when
-                                                , forM_
+import           Control.Monad                  ( forM_
                                                 , void
+                                                , when
                                                 )
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
@@ -11,8 +12,8 @@ import           UnliftIO                       ( liftIO )
 import           UnliftIO.Concurrent
 
 import           Discord
-import           Discord.Types
 import qualified Discord.Requests              as R
+import           Discord.Types
 
 -- Allows this code to be an executable. See discord-haskell.cabal
 main :: IO ()

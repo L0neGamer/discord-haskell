@@ -10,15 +10,15 @@ module Discord.Internal.Rest.User
   ) where
 
 
-import           Data.Aeson
 import           Codec.Picture
-import           Network.HTTP.Req               ( (/:) )
-import qualified Network.HTTP.Req              as R
+import           Data.Aeson
+import qualified Data.ByteString               as B
+import qualified Data.ByteString.Base64        as B64
+import qualified Data.ByteString.Lazy          as BL
 import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as TE
-import qualified Data.ByteString               as B
-import qualified Data.ByteString.Lazy          as BL
-import qualified Data.ByteString.Base64        as B64
+import           Network.HTTP.Req               ( (/:) )
+import qualified Network.HTTP.Req              as R
 
 import           Discord.Internal.Rest.Prelude
 import           Discord.Internal.Types

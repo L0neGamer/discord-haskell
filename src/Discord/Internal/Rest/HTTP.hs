@@ -11,26 +11,26 @@ module Discord.Internal.Rest.HTTP
 
 import           Prelude                 hiding ( log )
 
-import           Control.Monad.IO.Class         ( liftIO )
 import           Control.Concurrent             ( threadDelay )
-import           Control.Exception.Safe         ( try )
-import           Control.Concurrent.MVar
 import           Control.Concurrent.Chan
+import           Control.Concurrent.MVar
+import           Control.Exception.Safe         ( try )
+import           Control.Monad.IO.Class         ( liftIO )
+import qualified Data.ByteString               as B
+import qualified Data.ByteString.Lazy          as BL
 import           Data.Ix                        ( inRange )
+import qualified Data.Map.Strict               as M
+import           Data.Maybe                     ( fromMaybe )
+import qualified Data.Text                     as T
+import qualified Data.Text.Encoding            as TE
 import           Data.Time.Clock.POSIX          ( POSIXTime
                                                 , getPOSIXTime
                                                 )
-import qualified Data.ByteString               as B
-import qualified Data.ByteString.Lazy          as BL
-import qualified Data.Text                     as T
-import qualified Data.Text.Encoding            as TE
-import           Text.Read                      ( readMaybe )
-import           Data.Maybe                     ( fromMaybe )
 import qualified Network.HTTP.Req              as R
-import qualified Data.Map.Strict               as M
+import           Text.Read                      ( readMaybe )
 
-import           Discord.Internal.Types
 import           Discord.Internal.Rest.Prelude
+import           Discord.Internal.Types
 
 data RestCallInternalException = RestCallInternalErrorCode Int B.ByteString B.ByteString
                                | RestCallInternalNoParse String BL.ByteString

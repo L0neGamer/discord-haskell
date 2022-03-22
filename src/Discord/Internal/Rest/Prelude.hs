@@ -6,13 +6,13 @@
 -- | Utility and base types and functions for the Discord Rest API
 module Discord.Internal.Rest.Prelude where
 
-import           Prelude                 hiding ( log )
 import           Control.Exception.Safe         ( throwIO )
 import           Control.Monad.IO.Class         ( MonadIO
                                                 , liftIO
                                                 )
 import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as TE
+import           Prelude                 hiding ( log )
 
 
 import qualified Network.HTTP.Req              as R

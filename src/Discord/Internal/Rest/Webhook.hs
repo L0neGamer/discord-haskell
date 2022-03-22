@@ -13,16 +13,16 @@ module Discord.Internal.Rest.Webhook
   ) where
 
 import           Data.Aeson
-import qualified Data.Text                     as T
 import qualified Data.ByteString               as B
 import qualified Data.ByteString.Lazy          as BL
-import           Network.HTTP.Req               ( (/:) )
-import qualified Network.HTTP.Req              as R
+import qualified Data.Text                     as T
 import           Network.HTTP.Client            ( RequestBody(RequestBodyBS) )
 import           Network.HTTP.Client.MultipartFormData
                                                 ( partBS
                                                 , partFileRequestBody
                                                 )
+import           Network.HTTP.Req               ( (/:) )
+import qualified Network.HTTP.Req              as R
 
 import           Discord.Internal.Rest.Prelude
 import           Discord.Internal.Types

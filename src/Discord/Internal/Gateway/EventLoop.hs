@@ -7,38 +7,38 @@ module Discord.Internal.Gateway.EventLoop where
 
 import           Prelude                 hiding ( log )
 
+import           Control.Concurrent             ( forkIO
+                                                , killThread
+                                                , threadDelay
+                                                )
+import           Control.Concurrent.Async       ( race )
+import           Control.Concurrent.Chan
+import           Control.Exception.Safe         ( SomeException
+                                                , finally
+                                                , try
+                                                )
 import           Control.Monad                  ( forever
                                                 , void
                                                 )
 import           Control.Monad.Random           ( getRandomR )
-import           Control.Concurrent.Async       ( race )
-import           Control.Concurrent.Chan
-import           Control.Concurrent             ( threadDelay
-                                                , killThread
-                                                , forkIO
-                                                )
-import           Control.Exception.Safe         ( try
-                                                , finally
-                                                , SomeException
-                                                )
-import           Data.IORef
 import           Data.Aeson                     ( eitherDecode
                                                 , encode
                                                 )
+import qualified Data.ByteString.Lazy          as BL
+import           Data.IORef
 import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as TE
-import qualified Data.ByteString.Lazy          as BL
 
-import           Wuss                           ( runSecureClient )
-import           Network.WebSockets             ( ConnectionException(..)
-                                                , Connection
+import           Network.WebSockets             ( Connection
+                                                , ConnectionException(..)
                                                 , receiveData
-                                                , sendTextData
                                                 , sendClose
+                                                , sendTextData
                                                 )
+import           Wuss                           ( runSecureClient )
 
-import           Discord.Internal.Types
 import           Discord.Internal.Rest.Prelude  ( apiVersion )
+import           Discord.Internal.Types
 
 
 data GatewayHandle = GatewayHandle

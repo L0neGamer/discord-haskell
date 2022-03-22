@@ -3,16 +3,16 @@ module Discord.Handle
   , HandleThreadId(..)
   ) where
 
-import           Control.Concurrent             ( ThreadId
-                                                , Chan
+import           Control.Concurrent             ( Chan
                                                 , MVar
+                                                , ThreadId
                                                 )
 import qualified Data.Text                     as T
 
-import           Discord.Internal.Rest          ( RestChanHandle(..) )
-import           Discord.Internal.Gateway       ( GatewayHandle(..)
-                                                , CacheHandle(..)
+import           Discord.Internal.Gateway       ( CacheHandle(..)
+                                                , GatewayHandle(..)
                                                 )
+import           Discord.Internal.Rest          ( RestChanHandle(..) )
 
 -- | Thread Ids marked by what type they are
 data HandleThreadId = HandleThreadIdRest ThreadId

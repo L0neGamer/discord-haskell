@@ -4,13 +4,13 @@
 module Discord.Internal.Types.Color where
 
 
-import           Text.Read                      ( readMaybe )
-import           Data.Maybe                     ( fromMaybe )
-import           Data.Char                      ( toLower )
-import           Data.Aeson
-import           Data.Data
 import           Control.Applicative            ( Alternative((<|>)) )
+import           Data.Aeson
 import           Data.Bits                      ( Bits((.&.)) )
+import           Data.Char                      ( toLower )
+import           Data.Data
+import           Data.Maybe                     ( fromMaybe )
+import           Text.Read                      ( readMaybe )
 
 
 import           Discord.Internal.Types.Prelude ( InternalDiscordEnum(..) )

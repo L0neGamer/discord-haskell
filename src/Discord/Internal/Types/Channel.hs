@@ -9,23 +9,23 @@ module Discord.Internal.Types.Channel where
 import           Control.Applicative            ( empty )
 import           Data.Aeson
 import           Data.Aeson.Types               ( Parser )
+import           Data.Bits
+import           Data.Data                      ( Data )
 import           Data.Default                   ( Default
                                                 , def
                                                 )
 import           Data.Text                      ( Text )
-import           Data.Time.Clock
 import qualified Data.Text                     as T
-import           Data.Bits
-import           Data.Data                      ( Data )
+import           Data.Time.Clock
 
-import           Discord.Internal.Types.Prelude
-import           Discord.Internal.Types.User    ( User(..)
-                                                , GuildMember
-                                                )
-import           Discord.Internal.Types.Embed
 import           Discord.Internal.Types.Components
                                                 ( ComponentActionRow )
+import           Discord.Internal.Types.Embed
 import           Discord.Internal.Types.Emoji
+import           Discord.Internal.Types.Prelude
+import           Discord.Internal.Types.User    ( GuildMember
+                                                , User(..)
+                                                )
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel

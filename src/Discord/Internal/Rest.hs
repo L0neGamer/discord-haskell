@@ -13,21 +13,21 @@ module Discord.Internal.Rest
   , RestCallInternalException(..)
   ) where
 
-import           Prelude                 hiding ( log )
-import           Data.Aeson                     ( FromJSON
-                                                , eitherDecode
+import           Control.Concurrent             ( ThreadId
+                                                , forkIO
                                                 )
 import           Control.Concurrent.Chan
 import           Control.Concurrent.MVar
-import           Control.Concurrent             ( forkIO
-                                                , ThreadId
+import           Data.Aeson                     ( FromJSON
+                                                , eitherDecode
                                                 )
 import qualified Data.ByteString.Lazy          as BL
 import qualified Data.Text                     as T
+import           Prelude                 hiding ( log )
 
 
-import           Discord.Internal.Types
 import           Discord.Internal.Rest.HTTP
+import           Discord.Internal.Types
 
 newtype RestChanHandle = RestChanHandle
   { restHandleChan

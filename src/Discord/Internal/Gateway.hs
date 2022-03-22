@@ -12,31 +12,31 @@ module Discord.Internal.Gateway
   , module Discord.Internal.Types
   ) where
 
-import           Prelude                 hiding ( log )
-import           Control.Concurrent.Chan        ( newChan
-                                                , dupChan
-                                                , Chan
-                                                )
-import           Control.Concurrent             ( forkIO
+import           Control.Concurrent             ( MVar
                                                 , ThreadId
+                                                , forkIO
                                                 , newEmptyMVar
-                                                , MVar
+                                                )
+import           Control.Concurrent.Chan        ( Chan
+                                                , dupChan
+                                                , newChan
                                                 )
 import           Data.IORef                     ( newIORef )
 import qualified Data.Text                     as T
+import           Prelude                 hiding ( log )
 
+import           Discord.Internal.Gateway.Cache ( Cache(..)
+                                                , CacheHandle(..)
+                                                , cacheLoop
+                                                )
+import           Discord.Internal.Gateway.EventLoop
+                                                ( GatewayException(..)
+                                                , GatewayHandle(..)
+                                                , connectionLoop
+                                                )
 import           Discord.Internal.Types         ( Auth
                                                 , EventInternalParse
                                                 , GatewayIntent
-                                                )
-import           Discord.Internal.Gateway.EventLoop
-                                                ( connectionLoop
-                                                , GatewayHandle(..)
-                                                , GatewayException(..)
-                                                )
-import           Discord.Internal.Gateway.Cache ( cacheLoop
-                                                , Cache(..)
-                                                , CacheHandle(..)
                                                 )
 
 startCacheThread :: Chan T.Text -> IO (CacheHandle, ThreadId)

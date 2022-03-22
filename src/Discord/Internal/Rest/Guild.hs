@@ -20,13 +20,13 @@ module Discord.Internal.Rest.Guild
 
 
 import           Data.Aeson
+import qualified Data.Text                     as T
 import           Network.HTTP.Req               ( (/:) )
 import qualified Network.HTTP.Req              as R
-import qualified Data.Text                     as T
 
+import           Data.Default                   ( Default(..) )
 import           Discord.Internal.Rest.Prelude
 import           Discord.Internal.Types
-import           Data.Default                   ( Default(..) )
 
 instance Request (GuildRequest a) where
   majorRoute  = guildMajorRoute

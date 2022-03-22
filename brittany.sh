@@ -1,1 +1,1 @@
-brittany --write-mode=inplace $(git ls-files '*.hs')
+brittany --config-file=brittany.yaml --write-mode=inplace $(git ls-files '*.hs')

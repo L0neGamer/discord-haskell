@@ -111,4 +111,3 @@ library
                      , mtl
                      , unliftio
                      , scientific
-                     , stm

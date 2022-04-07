@@ -6,14 +6,12 @@ module Discord.Internal.Gateway.Cache where
 
 import Prelude hiding (log)
 import Control.Monad (forever)
-import Control.Concurrent
-import Control.Concurrent.STM
+import Control.Concurrent (Chan, MVar, readChan, writeChan, putMVar, takeMVar)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import System.Timeout
 
 import Discord.Internal.Types
-import Discord.Internal.Gateway.EventLoop
+import Discord.Internal.Gateway.EventLoop (GatewayException)
 
 data Cache d = Cache
      { cacheCurrentUser :: User
@@ -26,41 +24,34 @@ data Cache d = Cache
 
 data CacheHandle d = CacheHandle
   { cacheHandleEvents :: Chan (Either GatewayException EventInternalParse)
-  , cacheHandleCache  :: TVar (Either (Cache d, GatewayException) (Cache d))
+  , cacheHandleCache  :: MVar (Either (Cache d, GatewayException) (Cache d))
   }
 
-cacheLoop :: forall d. Maybe d -> Chan (Either GatewayException EventInternalParse) -> Chan T.Text -> IO (CacheHandle d, ThreadId)
-cacheLoop d eventChan log = do
-      maybeready <- timeout 5000000 $ readChan eventChan -- timeout is 5 seconds
-      case maybeready of
-        Nothing -> fail "timed out on getting ready cache loop"
-        Just ready ->
-          case ready of
-            Right (InternalReady _ user dmChannels _unavailableGuilds _ _ pApp) -> do
-              let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
-              chc <- newTVarIO (Right (Cache user dmChans M.empty M.empty pApp d))
-              let ch = CacheHandle eventChan chc
-              lti <- forkIO (loop chc)
-              return (ch, lti)
-            Right r -> do
-              writeChan log (T.pack $ expectedReady r)
-              fail $ expectedReady r
-            Left e -> do
-              writeChan log (T.pack $ gatewayException e)
-              fail $ gatewayException e
+cacheLoop :: forall d. Maybe d ->  CacheHandle d -> Chan T.Text -> IO ()
+cacheLoop d cacheHandle log = do
+      ready <- readChan eventChan
+      case ready of
+        Right (InternalReady _ user dmChannels _unavailableGuilds _ _ pApp) -> do
+          let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
+          putMVar cache (Right (Cache user dmChans M.empty M.empty pApp d))
+          loop
+        Right r ->
+          writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
+        Left e ->
+          writeChan log ("cache - stopping cache - gateway exception " <> T.pack (show e))
   where
-  expectedReady r = "cache - stopping cache - expected Ready event, but got " <> show r
-  gatewayException e = "cache - stopping cache - gateway exception " <> show e
+  cache     = cacheHandleCache cacheHandle
+  eventChan = cacheHandleEvents cacheHandle
 
-  loop :: TVar (Either (Cache d, GatewayException) (Cache d)) -> IO ()
-  loop cache = forever $ do
+  loop :: IO ()
+  loop = forever $ do
     eventOrExcept <- readChan eventChan
-    minfo <- readTVarIO cache
+    minfo <- takeMVar cache
     case minfo of
-      Left nope -> atomically $ writeTVar cache (Left nope)
+      Left nope -> putMVar cache (Left nope)
       Right info -> case eventOrExcept of
-                      Left e -> atomically $ writeTVar cache (Left (info, e))
-                      Right event -> atomically $ writeTVar cache (Right (adjustCache info event))
+                      Left e -> putMVar cache (Left (info, e))
+                      Right event -> putMVar cache (Right (adjustCache info event))
 
 adjustCache :: Cache d -> EventInternalParse -> Cache d
 adjustCache minfo event = case event of

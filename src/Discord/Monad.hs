@@ -27,7 +27,6 @@ import Discord.Internal.Rest
 import Discord.Requests
 import UnliftIO (IOException, MonadUnliftIO, SomeException, finally, race, try)
 import UnliftIO.Concurrent
-import UnliftIO.STM (atomically, readTVar, readTVarIO, writeTVar)
 import Prelude hiding (log)
 
 class MonadUnliftIO m => MonadDiscord d m | m -> d where
@@ -105,7 +104,7 @@ sendCommand' e = do
 readCache' :: EnvDiscordHandler d (Cache d)
 readCache' = do
   cache <- asks discordHandleCache
-  merr <- readTVarIO (cacheHandleCache cache)
+  merr <- readMVar (cacheHandleCache cache)
   case merr of
     Left (c, _) -> pure c
     Right c -> pure c
@@ -114,11 +113,7 @@ readCache' = do
 modifyCacheData' :: forall d. (Maybe d -> Maybe d) -> EnvDiscordHandler d (Maybe d)
 modifyCacheData' f = do
   cache <- asks discordHandleCache
-  atomically $ do
-    ed <- readTVar (cacheHandleCache cache)
-    let (e', d') = modifyCache ed
-    writeTVar (cacheHandleCache cache) e'
-    return d'
+  modifyMVar (cacheHandleCache cache) (pure . modifyCache)
   where
     modifyCache :: Either (Cache d, GatewayException) (Cache d) -> (Either (Cache d, GatewayException) (Cache d), Maybe d)
     modifyCache e =

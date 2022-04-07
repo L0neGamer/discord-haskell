@@ -1,11 +1,9 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE LambdaCase #-}
 
 module Discord.Monad
   ( MonadDiscord (..),
@@ -29,14 +27,24 @@ import Discord.Internal.Rest
 import Discord.Requests
 import UnliftIO (IOException, MonadUnliftIO, SomeException, finally, race, try)
 import UnliftIO.Concurrent
+import UnliftIO.STM (atomically, readTVar, readTVarIO, writeTVar)
 import Prelude hiding (log)
 
 class MonadUnliftIO m => MonadDiscord d m | m -> d where
+  -- | Perform a REST call
   restCall :: (FromJSON a, Request (r a)) => r a -> m (Either RestCallErrorCode a)
+
+  -- | Send a command to the gateway.
   sendCommand :: GatewaySendable -> m ()
+
+  -- | Read the cache. Blocks if the cache isn't present.
   readCache :: m (Cache d)
+
+  -- | Stop all the background threads.
   stopDiscord :: m ()
-  modifyCacheData :: (Maybe d -> Maybe d) -> m ()
+
+  -- | Modify the cache data. Returns the edited value.
+  modifyCacheData :: (Maybe d -> Maybe d) -> m (Maybe d)
 
 instance {-# OVERLAPPING #-} MonadDiscord d (EnvDiscordHandler d) where
   restCall = restCall'
@@ -97,23 +105,29 @@ sendCommand' e = do
 readCache' :: EnvDiscordHandler d (Cache d)
 readCache' = do
   cache <- asks discordHandleCache
-  merr <- readMVar (cacheHandleCache cache)
+  merr <- readTVarIO (cacheHandleCache cache)
   case merr of
     Left (c, _) -> pure c
     Right c -> pure c
 
--- | Modify the user cache.
-modifyCacheData' :: forall d. (Maybe d -> Maybe d) -> EnvDiscordHandler d ()
+-- | Modify the user cache. Returns the modified value.
+modifyCacheData' :: forall d. (Maybe d -> Maybe d) -> EnvDiscordHandler d (Maybe d)
 modifyCacheData' f = do
   cache <- asks discordHandleCache
-  modifyMVar_ (cacheHandleCache cache) (pure . modifyCache)
+  atomically $ do
+    ed <- readTVar (cacheHandleCache cache)
+    let (e', d') = modifyCache ed
+    writeTVar (cacheHandleCache cache) e'
+    return d'
   where
-    modifyCache :: Either (Cache d, GatewayException) (Cache d) -> Either (Cache d, GatewayException) (Cache d)
-    modifyCache = \case
-      Left (c,ge) -> Left (c {cacheData = f (cacheData c)}, ge)
-      Right c -> Right (c {cacheData = f (cacheData c)})
+    modifyCache :: Either (Cache d, GatewayException) (Cache d) -> (Either (Cache d, GatewayException) (Cache d), Maybe d)
+    modifyCache e =
+      let d' c = f (cacheData c)
+       in case e of
+            Left (c, ge) -> (Left (c {cacheData = d' c}, ge), d' c)
+            Right c -> (Right (c {cacheData = d' c}), d' c)
 
--- | Stop all the background threads
+-- | Stop all the background threads.
 stopDiscord' :: EnvDiscordHandler d ()
 stopDiscord' = do
   h <- ask
@@ -138,10 +152,10 @@ runDiscord = runDiscordM id
 runDiscordM :: MonadDiscord d m => (forall a. m a -> EnvDiscordHandler d a) -> EnvRunDiscordOpts d m -> IO T.Text
 runDiscordM unlift opts = do
   log <- newChan
-  logId <- liftIO $ startLogger (discordOnLog opts) log
-  (cache, cacheId) <- liftIO $ startCacheThread log
-  (rest, restId) <- liftIO $ startRestThread (Auth (discordToken opts)) log
-  (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache log
+  logId <- startLogger (discordOnLog opts) log
+  (cache, cacheId) <- startCacheThread (discordCacheData opts) log
+  (rest, restId) <- startRestThread (Auth (discordToken opts)) log
+  (gate, gateId) <- startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache log
 
   libE <- newEmptyMVar
 
@@ -221,7 +235,8 @@ data EnvRunDiscordOpts d m = RunDiscordOpts
     discordOnEvent :: MonadDiscord d m => Event -> m (),
     discordOnLog :: T.Text -> IO (),
     discordForkThreadForEvents :: Bool,
-    discordGatewayIntent :: GatewayIntent
+    discordGatewayIntent :: GatewayIntent,
+    discordCacheData :: Maybe d
   }
 
 type RunDiscordOpts = EnvRunDiscordOpts () DiscordHandler
@@ -235,7 +250,8 @@ instance Default (EnvRunDiscordOpts d m) where
         discordOnEvent = \_ -> pure (),
         discordOnLog = \_ -> pure (),
         discordForkThreadForEvents = True,
-        discordGatewayIntent = def
+        discordGatewayIntent = def,
+        discordCacheData = Nothing
       }
 
 startLogger :: (T.Text -> IO ()) -> Chan T.Text -> IO ThreadId

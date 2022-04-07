@@ -1,6 +1,8 @@
 module Discord.Handle
-  ( DiscordHandle(..)
+  ( DiscordHandle
+  , EnvDiscordHandle(..)
   , DiscordHandler
+  , EnvDiscordHandler
   , HandleThreadId(..)
   ) where
 
@@ -17,13 +19,17 @@ data HandleThreadId = HandleThreadIdRest ThreadId
                       | HandleThreadIdLogger ThreadId
                       | HandleThreadIdGateway ThreadId
 
-data DiscordHandle = DiscordHandle
+data EnvDiscordHandle d = DiscordHandle
   { discordHandleRestChan :: RestChanHandle
   , discordHandleGateway :: GatewayHandle
-  , discordHandleCache :: CacheHandle
+  , discordHandleCache :: CacheHandle d
   , discordHandleThreads :: [HandleThreadId]
   , discordHandleLog :: Chan T.Text
   , discordHandleLibraryError :: MVar T.Text
   }
 
+type DiscordHandle = EnvDiscordHandle ()
+
 type DiscordHandler = ReaderT DiscordHandle IO
+
+type EnvDiscordHandler d = ReaderT (EnvDiscordHandle d) IO

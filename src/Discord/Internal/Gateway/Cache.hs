@@ -13,26 +13,27 @@ import qualified Data.Text as T
 import Discord.Internal.Types
 import Discord.Internal.Gateway.EventLoop
 
-data Cache = Cache
+data Cache d = Cache
      { cacheCurrentUser :: User
      , cacheDMChannels :: M.Map ChannelId Channel
      , cacheGuilds :: M.Map GuildId Guild
      , cacheChannels :: M.Map ChannelId Channel
      , cacheApplication :: PartialApplication
+     , cacheData :: Maybe d
      } deriving (Show)
 
-data CacheHandle = CacheHandle
+data CacheHandle d = CacheHandle
   { cacheHandleEvents :: Chan (Either GatewayException EventInternalParse)
-  , cacheHandleCache  :: MVar (Either (Cache, GatewayException) Cache)
+  , cacheHandleCache  :: MVar (Either (Cache d, GatewayException) (Cache d))
   }
 
-cacheLoop :: CacheHandle -> Chan T.Text -> IO ()
+cacheLoop :: CacheHandle d -> Chan T.Text -> IO ()
 cacheLoop cacheHandle log = do
       ready <- readChan eventChan
       case ready of
         Right (InternalReady _ user dmChannels _unavailableGuilds _ _ pApp) -> do
           let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
-          putMVar cache (Right (Cache user dmChans M.empty M.empty pApp))
+          putMVar cache (Right (Cache user dmChans M.empty M.empty pApp Nothing))
           loop
         Right r ->
           writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
@@ -52,7 +53,7 @@ cacheLoop cacheHandle log = do
                       Left e -> putMVar cache (Left (info, e))
                       Right event -> putMVar cache (Right (adjustCache info event))
 
-adjustCache :: Cache -> EventInternalParse -> Cache
+adjustCache :: Cache d -> EventInternalParse -> Cache d
 adjustCache minfo event = case event of
   InternalGuildCreate guild ->
     let newChans = maybe [] (map (setChanGuildID (guildId guild))) (guildChannels guild)

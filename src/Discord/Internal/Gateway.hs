@@ -15,7 +15,7 @@ module Discord.Internal.Gateway
 import Prelude hiding (log)
 import Control.Concurrent.Chan (newChan, dupChan, Chan)
 import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
-import Data.IORef (newIORef)
+import GHC.Conc (newTVarIO)
 import qualified Data.Text as T
 
 import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent)
@@ -36,9 +36,9 @@ startGatewayThread :: Auth -> GatewayIntent -> CacheHandle -> Chan T.Text -> IO 
 startGatewayThread auth intent cacheHandle log = do
   events <- dupChan (cacheHandleEvents cacheHandle)
   sends <- newChan
-  status <- newIORef Nothing
-  seqid <- newIORef 0
-  seshid <- newIORef ""
+  status <- newTVarIO Nothing
+  seqid <- newTVarIO 0
+  seshid <- newTVarIO Nothing
   let gatewayHandle = GatewayHandle events sends status seqid seshid
   tid <- forkIO $ connectionLoop auth intent gatewayHandle log
   pure (gatewayHandle, tid)

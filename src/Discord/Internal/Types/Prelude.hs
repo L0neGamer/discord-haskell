@@ -1,8 +1,9 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE FlexibleInstances  #-}
-{-# LANGUAGE RankNTypes  #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE KindSignatures #-}
 
 -- | Provides base types and utility functions needed for modules in Discord.Internal.Types
 module Discord.Internal.Types.Prelude where
@@ -18,6 +19,7 @@ import Data.Time.Clock.POSIX
 import Data.Bifunctor (first)
 import Text.Read (readMaybe)
 import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
+import Data.Kind (Type)
 
 -- | Authorization token for the Discord API
 newtype Auth = Auth T.Text
@@ -53,7 +55,7 @@ instance FromJSON Snowflake where
             (Just i) -> pure i
       )
 
-newtype DiscordId a = DiscordId { unId :: Snowflake }
+newtype DiscordId (a :: Type) = DiscordId { unId :: Snowflake }
   deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)
 
 instance Show (DiscordId a) where

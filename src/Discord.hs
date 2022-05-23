@@ -24,11 +24,10 @@ import Prelude hiding (log)
 import Control.Monad.Reader (ReaderT, runReaderT, void, ask, liftIO, forever)
 import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
-import Data.IORef (writeIORef)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 
-import UnliftIO (race, try, finally, SomeException, IOException)
+import UnliftIO (race, try, finally, SomeException, IOException, atomically, writeTVar)
 import UnliftIO.Concurrent
 
 import Discord.Handle
@@ -61,10 +60,10 @@ instance Default RunDiscordOpts where
 runDiscord :: RunDiscordOpts -> IO T.Text
 runDiscord opts = do
   log <- newChan
-  logId <- liftIO $ startLogger (discordOnLog opts) log
-  (cache, cacheId) <- liftIO $ startCacheThread log
-  (rest, restId) <- liftIO $ startRestThread (Auth (discordToken opts)) log
-  (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache log
+  logId <- startLogger (discordOnLog opts) log
+  (cache, cacheId) <- startCacheThread log
+  (rest, restId) <- startRestThread (Auth (discordToken opts)) log
+  (gate, gateId) <- startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache log
 
   libE <- newEmptyMVar
 
@@ -149,7 +148,7 @@ sendCommand e = do
   h <- ask
   writeChan (gatewayHandleUserSendables (discordHandleGateway h)) e
   case e of
-    UpdateStatus opts -> liftIO $ writeIORef (gatewayHandleLastStatus (discordHandleGateway h)) (Just opts)
+    UpdateStatus opts -> atomically $ writeTVar (gatewayHandleLastStatus (discordHandleGateway h)) (Just opts)
     _ -> pure ()
 
 -- | Access the current state of the gateway cache

@@ -188,7 +188,7 @@ newExampleSlashCommand =
                               "testing asking for a channel"
                               Nothing
                               False
-                              (Just [ChannelTypeOptionGuildVoice]),
+                              (Just [ChannelTypeGuildVoice]),
                             OptionValueMentionable
                               "mentionable"
                               Nothing
@@ -307,7 +307,7 @@ eventHandler testserverid event = case event of
                       ( SelectMenu
                           "channel select menu"
                           False
-                          (SelectMenuDataChannels [ChannelTypeOptionGuildText,ChannelTypeOptionGuildPublicThread,ChannelTypeOptionGuildCategory])
+                          (SelectMenuDataChannels [ChannelTypeGuildText,ChannelTypeGuildPublicThread,ChannelTypeGuildCategory])
                           (Just "this is a place holder")
                           (Just 1)
                           (Just 1)

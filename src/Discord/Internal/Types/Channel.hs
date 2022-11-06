@@ -24,7 +24,7 @@ module Discord.Internal.Types.Channel (
   , MessageFlags (..)
   , MessageInteraction (..)
 
-  , ChannelTypeOption (..)
+  , ChannelType (..)
   ) where
 
 import Control.Applicative (empty)
@@ -42,46 +42,18 @@ import Discord.Internal.Types.User (User(..), GuildMember)
 import Discord.Internal.Types.Embed
 import Discord.Internal.Types.Components (ActionRow)
 import Discord.Internal.Types.Emoji
+import Discord.Internal.Types.Channel.SubTypes (Overwrite(..))
+
+import qualified Discord.Internal.Types.Channel.SubTypes as C
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
   -- | A text channel in a guild.
-  = ChannelText
-      { channelId          :: ChannelId         -- ^ The id of the channel (Will be equal to
-                                                --   the guild if it's the "general" channel).
-      , channelGuild       :: GuildId           -- ^ The id of the guild.
-      , channelName        :: T.Text            -- ^ The name of the channel (2 - 1000 characters).
-      , channelPosition    :: Integer           -- ^ The storing position of the channel.
-      , channelPermissions :: [Overwrite]       -- ^ An array of permission 'Overwrite's
-      , channelUserRateLimit :: Integer         -- ^ Seconds before a user can speak again
-      , channelNSFW        :: Bool              -- ^ Is not-safe-for-work
-      , channelTopic       :: T.Text            -- ^ The topic of the channel. (0 - 1024 chars).
-      , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
-                                                --   channel
-      , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
-      }
+  = ChannelGuildText C.ChannelGuildText
   -- | A news Channel in a guild.
-  | ChannelNews
-      { channelId          :: ChannelId       -- ^ The id of the channel
-      , channelGuild       :: GuildId         -- ^ The id of the guild
-      , channelName        :: T.Text          -- ^ The name of the channel (2 - 1000 characters)
-      , channelPosition    :: Integer         -- ^ The position of the channel
-      , channelPermissions :: [Overwrite]     -- ^ An array of permission 'Overrite's
-      , channelNSFW        :: Bool            -- ^ Is not-safe-for-work
-      , channelTopic       :: T.Text          -- ^ Topic of the channel (0 - 1024 characters)
-      , channelLastMessage :: Maybe MessageId -- ^ The ID of the last message of the channel
-      , channelParentId    :: Maybe ParentId  -- ^ The id of the parent channel (category)
-      }
+  | ChannelGuildAnnouncement C.ChannelGuildAnnouncement
    -- | A store page channel in a guild
-  | ChannelStorePage
-      { channelId          :: ChannelId      -- ^ The id of the channel
-      , channelGuild       :: GuildId        -- ^ The id of the guild
-      , channelName        :: T.Text         -- ^ The name of the channel (2 - 1000 characters)
-      , channelPosition    :: Integer        -- ^ The position of the channel
-      , channelNSFW        :: Bool           -- ^ Is not-safe-for-work
-      , channelPermissions :: [Overwrite]    -- ^ An array of permission 'Overrite's
-      , channelParentId    :: Maybe ParentId -- ^ The id of the parrent channel (category)
-      }
+  | ChannelStorePage (C.ChannelGuildText ChannelTypeGuildStore)
   -- | A voice channel in a guild.
   | ChannelVoice
       { channelId          :: ChannelId       -- ^ The id of the channel
@@ -253,114 +225,114 @@ instance FromJSON Channel where
       _ -> ChannelUnknownType <$> o .:  "id"
                               <*> pure (T.pack (show o))
 
-instance ToJSON Channel where
-  toJSON ChannelText{..} = objectFromMaybes
-              [ "type" .== Number 0
-              , "id" .== channelId
-              , "guild_id" .== channelGuild
-              , "name" .== channelName
-              , "position" .== channelPosition
-              , "rate_limit_per_user" .== channelUserRateLimit
-              , "nsfw" .== channelNSFW
-              , "permission_overwrites" .== channelPermissions
-              , "topic" .== channelTopic
-              , "last_message_id" .=? channelLastMessage
-              , "parent_id" .== channelParentId
-              ]
-  toJSON ChannelNews{..} = objectFromMaybes
-              [ "type" .== Number 5
-              , "id" .== channelId
-              , "guild_id" .== channelGuild
-              , "name" .== channelName
-              , "position" .== channelPosition
-              , "permission_overwrites" .== channelPermissions
-              , "nsfw" .== channelNSFW
-              , "topic" .== channelTopic
-              , "last_message_id" .=? channelLastMessage
-              , "parent_id" .=? channelParentId
-              ]
-  toJSON ChannelStorePage{..} = objectFromMaybes
-              [ "type" .== Number 6
-              , "id" .== channelId
-              , "guild_id" .== channelGuild
-              , "name" .== channelName
-              , "nsfw" .== channelNSFW
-              , "position" .== channelPosition
-              , "permission_overwrites" .== channelPermissions
-              ]
-  toJSON ChannelDirectMessage{..} = objectFromMaybes
-              [ "type" .== Number 1
-              , "id" .== channelId
-              , "recipients" .== channelRecipients
-              , "last_message_id" .=? channelLastMessage
-              ]
-  toJSON ChannelVoice{..} = objectFromMaybes
-              [ "type" .== Number 2
-              , "id" .== channelId
-              , "guild_id" .== channelGuild
-              , "name" .== channelName
-              , "position" .== channelPosition
-              , "nsfw" .== channelNSFW
-              , "permission_overwrites" .== channelPermissions
-              , "bitrate" .== channelBitRate
-              , "user_limit" .== channelUserLimit
-              ]
-  toJSON ChannelGroupDM{..} = objectFromMaybes
-              [ "type" .== Number 3
-              , "id" .== channelId
-              , "recipients" .== channelRecipients
-              , "last_message_id" .=? channelLastMessage
-              ]
-  toJSON ChannelGuildCategory{..} = objectFromMaybes
-              [ "type" .== Number 4
-              , "id" .== channelId
-              , "name" .== channelName
-              , "guild_id" .== channelGuild
-              ]
-  toJSON ChannelStage{..} = objectFromMaybes
-              [ "type" .== Number 13
-              , "id" .== channelId
-              , "guild_id" .== channelGuild
-              , "channel_id" .== channelStageId
-              , "topic" .== channelStageTopic
-              ]
-  toJSON ChannelNewsThread{..} = objectFromMaybes
-              [ "type" .== Number 10
-              , "id" .== channelId
-              , "guild_id" .== channelGuild
-              , "name" .=? channelThreadName
-              , "rate_limit_per_user" .=? channelUserRateLimitThread
-              , "last_message_id" .=? channelLastMessage
-              , "parent_id" .== channelParentId
-              , "thread_metadata" .=? channelThreadMetadata
-              , "member" .=? channelThreadMember
-              ]
-  toJSON ChannelPublicThread{..} = objectFromMaybes
-              [ "type" .== Number 11
-              , "id" .== channelId
-              , "guild_id" .== channelGuild
-              , "name" .=? channelThreadName
-              , "rate_limit_per_user" .=? channelUserRateLimitThread
-              , "last_message_id" .=? channelLastMessage
-              , "parent_id" .== channelParentId
-              , "thread_metadata" .=? channelThreadMetadata
-              , "member" .=? channelThreadMember
-              ]
-  toJSON ChannelPrivateThread{..} = objectFromMaybes
-              [ "type" .== Number 12
-              , "id" .== channelId
-              , "guild_id" .== channelGuild
-              , "name" .=? channelThreadName
-              , "rate_limit_per_user" .=? channelUserRateLimitThread
-              , "last_message_id" .=? channelLastMessage
-              , "parent_id" .== channelParentId
-              , "thread_metadata" .=? channelThreadMetadata
-              , "member" .=? channelThreadMember
-              ]
-  toJSON ChannelUnknownType{..} = objectFromMaybes
-              [ "id" .== channelId
-              , "json" .== channelJSON
-              ]
+-- instance ToJSON Channel where
+--   toJSON ChannelText{..} = objectFromMaybes
+--               [ "type" .== Number 0
+--               , "id" .== channelId
+--               , "guild_id" .== channelGuild
+--               , "name" .== channelName
+--               , "position" .== channelPosition
+--               , "rate_limit_per_user" .== channelUserRateLimit
+--               , "nsfw" .== channelNSFW
+--               , "permission_overwrites" .== channelPermissions
+--               , "topic" .== channelTopic
+--               , "last_message_id" .=? channelLastMessage
+--               , "parent_id" .== channelParentId
+--               ]
+--   toJSON ChannelNews{..} = objectFromMaybes
+--               [ "type" .== Number 5
+--               , "id" .== channelId
+--               , "guild_id" .== channelGuild
+--               , "name" .== channelName
+--               , "position" .== channelPosition
+--               , "permission_overwrites" .== channelPermissions
+--               , "nsfw" .== channelNSFW
+--               , "topic" .== channelTopic
+--               , "last_message_id" .=? channelLastMessage
+--               , "parent_id" .=? channelParentId
+--               ]
+--   toJSON ChannelStorePage{..} = objectFromMaybes
+--               [ "type" .== Number 6
+--               , "id" .== channelId
+--               , "guild_id" .== channelGuild
+--               , "name" .== channelName
+--               , "nsfw" .== channelNSFW
+--               , "position" .== channelPosition
+--               , "permission_overwrites" .== channelPermissions
+--               ]
+--   toJSON ChannelDirectMessage{..} = objectFromMaybes
+--               [ "type" .== Number 1
+--               , "id" .== channelId
+--               , "recipients" .== channelRecipients
+--               , "last_message_id" .=? channelLastMessage
+--               ]
+--   toJSON ChannelVoice{..} = objectFromMaybes
+--               [ "type" .== Number 2
+--               , "id" .== channelId
+--               , "guild_id" .== channelGuild
+--               , "name" .== channelName
+--               , "position" .== channelPosition
+--               , "nsfw" .== channelNSFW
+--               , "permission_overwrites" .== channelPermissions
+--               , "bitrate" .== channelBitRate
+--               , "user_limit" .== channelUserLimit
+--               ]
+--   toJSON ChannelGroupDM{..} = objectFromMaybes
+--               [ "type" .== Number 3
+--               , "id" .== channelId
+--               , "recipients" .== channelRecipients
+--               , "last_message_id" .=? channelLastMessage
+--               ]
+--   toJSON ChannelGuildCategory{..} = objectFromMaybes
+--               [ "type" .== Number 4
+--               , "id" .== channelId
+--               , "name" .== channelName
+--               , "guild_id" .== channelGuild
+--               ]
+--   toJSON ChannelStage{..} = objectFromMaybes
+--               [ "type" .== Number 13
+--               , "id" .== channelId
+--               , "guild_id" .== channelGuild
+--               , "channel_id" .== channelStageId
+--               , "topic" .== channelStageTopic
+--               ]
+--   toJSON ChannelNewsThread{..} = objectFromMaybes
+--               [ "type" .== Number 10
+--               , "id" .== channelId
+--               , "guild_id" .== channelGuild
+--               , "name" .=? channelThreadName
+--               , "rate_limit_per_user" .=? channelUserRateLimitThread
+--               , "last_message_id" .=? channelLastMessage
+--               , "parent_id" .== channelParentId
+--               , "thread_metadata" .=? channelThreadMetadata
+--               , "member" .=? channelThreadMember
+--               ]
+--   toJSON ChannelPublicThread{..} = objectFromMaybes
+--               [ "type" .== Number 11
+--               , "id" .== channelId
+--               , "guild_id" .== channelGuild
+--               , "name" .=? channelThreadName
+--               , "rate_limit_per_user" .=? channelUserRateLimitThread
+--               , "last_message_id" .=? channelLastMessage
+--               , "parent_id" .== channelParentId
+--               , "thread_metadata" .=? channelThreadMetadata
+--               , "member" .=? channelThreadMember
+--               ]
+--   toJSON ChannelPrivateThread{..} = objectFromMaybes
+--               [ "type" .== Number 12
+--               , "id" .== channelId
+--               , "guild_id" .== channelGuild
+--               , "name" .=? channelThreadName
+--               , "rate_limit_per_user" .=? channelUserRateLimitThread
+--               , "last_message_id" .=? channelLastMessage
+--               , "parent_id" .== channelParentId
+--               , "thread_metadata" .=? channelThreadMetadata
+--               , "member" .=? channelThreadMember
+--               ]
+--   toJSON ChannelUnknownType{..} = objectFromMaybes
+--               [ "id" .== channelId
+--               , "json" .== channelJSON
+--               ]
 
 -- | If the channel is part of a guild (has a guild id field)
 channelIsInGuild :: Channel -> Bool
@@ -374,32 +346,6 @@ channelIsInGuild c = case c of
         ChannelPublicThread{} -> True
         ChannelPrivateThread{} -> True
         _ -> False
-
--- | Permission overwrites for a channel.
-data Overwrite = Overwrite
-  { overwriteId    :: Either RoleId UserId -- ^ 'Role' or 'User' id
-  , overwriteAllow :: T.Text               -- ^ Allowed permission bit set
-  , overwriteDeny  :: T.Text               -- ^ Denied permission bit set
-  } deriving (Show, Read, Eq, Ord)
-
-instance FromJSON Overwrite where
-  parseJSON = withObject "Overwrite" $ \o -> do
-    t <- o .: "type"
-    i <- case (t :: Int) of
-      0 -> Left <$> o .: "id"
-      1 -> Right <$> o .: "id"
-      _ -> error "Type field can only be 0 (role id) or 1 (user id)"
-    Overwrite i
-              <$> o .: "allow"
-              <*> o .: "deny"
-
-instance ToJSON Overwrite where
-  toJSON Overwrite{..} = object
-              [ ("id",     toJSON $ either unId unId overwriteId)
-              , ("type",   toJSON (either (const 0) (const 1) overwriteId :: Int))
-              , ("allow",  toJSON overwriteAllow)
-              , ("deny",   toJSON overwriteDeny)
-              ]
 
 -- | Metadata for threads.
 data ThreadMetadata = ThreadMetadata

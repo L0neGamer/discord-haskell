@@ -142,8 +142,10 @@ library
     , Discord.Internal.Rest.Interactions
     , Discord.Internal.Rest.ScheduledEvents
     , Discord.Internal.Types
+    , Discord.Internal.Types.Checks
     , Discord.Internal.Types.Prelude
     , Discord.Internal.Types.Channel
+    , Discord.Internal.Types.Channel.SubTypes
     , Discord.Internal.Types.Events
     , Discord.Internal.Types.Gateway
     , Discord.Internal.Types.Guild
@@ -180,4 +182,5 @@ library
     unliftio >=0.2 && <0.3,
     scientific >=0.3 && <0.4,
     http-api-data >=0.4 && <0.6,
-    unordered-containers >=0.2.10.0 && <0.3
+    unordered-containers >=0.2.10.0 && <0.3,
+    hashable >=1.2.5 && <1.5

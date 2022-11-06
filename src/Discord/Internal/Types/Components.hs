@@ -28,7 +28,8 @@ import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.Emoji (Emoji)
-import Discord.Internal.Types.Prelude (objectFromMaybes, (.==), (.=?), ChannelTypeOption)
+import Discord.Internal.Types.Prelude (objectFromMaybes, (.==), (.=?))
+import Discord.Internal.Types.Channel.SubTypes
 
 -- | Container for other message Components
 data ActionRow = ActionRowButtons [Button] | ActionRowSelectMenu SelectMenu
@@ -235,7 +236,7 @@ data SelectMenuData =
   | SelectMenuDataUser -- ^ Users
   | SelectMenuDataRole -- ^ Roles
   | SelectMenuDataMentionable -- ^ Anything mentionable (users and roles)
-  | SelectMenuDataChannels [ChannelTypeOption] -- ^ Channels (of certain types)
+  | SelectMenuDataChannels [ChannelType] -- ^ Channels (of certain types)
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON SelectMenuData where

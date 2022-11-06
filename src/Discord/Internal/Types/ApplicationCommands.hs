@@ -21,7 +21,7 @@ module Discord.Internal.Types.ApplicationCommands
     EditApplicationCommand (..),
     defaultEditApplicationCommand,
     Choice (..),
-    ChannelTypeOption (..),
+    ChannelType (..),
     GuildApplicationCommandPermissions (..),
     ApplicationCommandPermissions (..),
     Number,
@@ -38,7 +38,7 @@ import Data.Scientific (Scientific)
 import Data.Char (isLower, isNumber)
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, Snowflake, objectFromMaybes, (.==), (.=?))
 import Data.Map.Strict (Map)
-import Discord.Internal.Types.Channel ( ChannelTypeOption(..) )
+import Discord.Internal.Types.Channel ( ChannelType(..) )
 
 import qualified Data.Text as T
 
@@ -326,7 +326,7 @@ data OptionValue
         -- | Whether this option is required
         optionValueRequired :: Bool,
         -- | What type of channel can be put in here
-        optionValueChannelTypes :: Maybe [ChannelTypeOption]
+        optionValueChannelTypes :: Maybe [ChannelType]
       }
   | OptionValueRole
       { -- | The name of the value

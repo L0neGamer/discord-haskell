@@ -3,6 +3,9 @@
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE FlexibleInstances  #-}
 {-# LANGUAGE RankNTypes  #-}
+{-# LANGUAGE DataKinds  #-}
+{-# LANGUAGE GADTs  #-}
+{-# LANGUAGE KindSignatures  #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 
@@ -42,6 +45,8 @@ module Discord.Internal.Types.Prelude
 
   , InternalDiscordEnum (..)
 
+  , InGuild (..)
+
   , Base64Image (..)
   , getMimeType
 
@@ -49,8 +54,6 @@ module Discord.Internal.Types.Prelude
   , (.=?)
   , AesonKey
   , objectFromMaybes
-
-  , ChannelTypeOption (..)
   )
 
  where
@@ -61,6 +64,7 @@ import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
 import Data.Word (Word64)
 import Data.Maybe (catMaybes)
 import Text.Read (readMaybe)
+import Data.Hashable
 
 import Data.Aeson.Types
 import Data.Time.Clock
@@ -87,7 +91,7 @@ authToken (Auth tok) = let token = T.strip tok
 
 -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
 newtype Snowflake = Snowflake { unSnowflake :: Word64 }
-  deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)
+  deriving (Ord, Eq, Num, Integral, Enum, Real, Bits, Hashable)
 
 instance Show Snowflake where
   show (Snowflake a) = show a
@@ -112,7 +116,7 @@ instance ToHttpApiData Snowflake where
   toUrlPiece = T.pack . show
 
 newtype DiscordId a = DiscordId { unId :: Snowflake }
-  deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)
+  deriving (Ord, Eq, Num, Integral, Enum, Real, Bits, Hashable)
 
 instance Show (DiscordId a) where
   show = show . unId
@@ -312,51 +316,5 @@ getMimeType bs
   = Just "image/webp"
   | otherwise = Nothing
 
--- | The different channel types. Used for application commands and components.
---
--- https://discord.com/developers/docs/resources/channel#channel-object-channel-types
-data ChannelTypeOption
-  = -- | A text channel in a server.
-    ChannelTypeOptionGuildText
-  | -- | A direct message between users.
-    ChannelTypeOptionDM
-  | -- | A voice channel in a server.
-    ChannelTypeOptionGuildVoice
-  | -- | A direct message between multiple users.
-    ChannelTypeOptionGroupDM
-  | -- | An organizational category that contains up to 50 channels.
-    ChannelTypeOptionGuildCategory
-  | -- | A channel that users can follow and crosspost into their own server.
-    ChannelTypeOptionGuildNews
-  | -- | A channel in which game developers can sell their game on discord.
-    ChannelTypeOptionGuildStore
-  | -- | A temporary sub-channel within a guild_news channel.
-    ChannelTypeOptionGuildNewsThread
-  | -- | A temporary sub-channel within a guild_text channel.
-    ChannelTypeOptionGuildPublicThread
-  | -- | A temporary sub-channel within a GUILD_TEXT channel that is only
-    -- viewable by those invited and those with the MANAGE_THREADS permission
-    ChannelTypeOptionGuildPrivateThread
-  | -- | A voice channel for hosting events with an audience.
-    ChannelTypeOptionGuildStageVoice
-  deriving (Show, Read, Data, Eq, Ord)
-
-instance InternalDiscordEnum ChannelTypeOption where
-  discordTypeStartValue = ChannelTypeOptionGuildText
-  fromDiscordType ChannelTypeOptionGuildText = 0
-  fromDiscordType ChannelTypeOptionDM = 1
-  fromDiscordType ChannelTypeOptionGuildVoice = 2
-  fromDiscordType ChannelTypeOptionGroupDM = 3
-  fromDiscordType ChannelTypeOptionGuildCategory = 4
-  fromDiscordType ChannelTypeOptionGuildNews = 5
-  fromDiscordType ChannelTypeOptionGuildStore = 6
-  fromDiscordType ChannelTypeOptionGuildNewsThread = 10
-  fromDiscordType ChannelTypeOptionGuildPublicThread = 11
-  fromDiscordType ChannelTypeOptionGuildPrivateThread = 12
-  fromDiscordType ChannelTypeOptionGuildStageVoice = 13
-
-instance ToJSON ChannelTypeOption where
-  toJSON = toJSON . fromDiscordType
-
-instance FromJSON ChannelTypeOption where
-  parseJSON = discordTypeParseJSON "ChannelTypeOption"
+class InGuild t where
+  guildId :: t -> GuildId

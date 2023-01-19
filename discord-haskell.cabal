@@ -168,4 +168,5 @@ library
     unliftio >=0.2 && <0.3,
     scientific >=0.3 && <0.4,
     http-api-data >=0.4 && <0.6,
-    unordered-containers >=0.2.10.0 && <0.3
+    unordered-containers >=0.2.10.0 && <0.3,
+    stm >=2.5 && <2.6

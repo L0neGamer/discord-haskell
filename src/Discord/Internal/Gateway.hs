@@ -13,34 +13,31 @@ module Discord.Internal.Gateway
   ) where
 
 import Prelude hiding (log)
-import Control.Concurrent.Chan (newChan, dupChan, Chan)
-import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
-import Data.IORef (newIORef)
-import qualified Data.Text as T
+import UnliftIO
+import UnliftIO.Concurrent
 
 import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent)
-import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..))
+import Discord.Internal.Gateway.EventLoop
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..))
 
 -- | Starts a thread for the cache
-startCacheThread :: Bool -> Chan T.Text -> IO (CacheHandle, ThreadId)
-startCacheThread isEnabled log = do
-  events <- newChan :: IO (Chan (Either GatewayException EventInternalParse))
-  cache <- newEmptyMVar :: IO (MVar (Either (Cache, GatewayException) Cache))
-  let cacheHandle = CacheHandle events cache
-  tid <- forkIO $ cacheLoop isEnabled cacheHandle log
-  pure (cacheHandle, tid)
+startCacheThread :: Bool -> EventChannel -> LoggingChannel -> IO (MVar CacheHandle, ThreadId)
+startCacheThread isEnabled eventChannel log = do
+  events <- atomically $ dupTChan eventChannel
+  cacheMVar <- newEmptyMVar
+  tid <- forkIO $ cacheLoop isEnabled events log cacheMVar
+  pure (cacheMVar, tid)
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received EventsInternalParse to the Chan
-startGatewayThread :: Auth -> GatewayIntent -> CacheHandle -> Chan T.Text -> IO (GatewayHandle, ThreadId)
-startGatewayThread auth intent cacheHandle log = do
-  events <- dupChan (cacheHandleEvents cacheHandle)
-  sends <- newChan
-  status <- newIORef Nothing
-  seqid <- newIORef 0
-  seshid <- newIORef ""
-  host <- newIORef "gateway.discord.gg"
+startGatewayThread :: Auth -> GatewayIntent -> EventChannel -> LoggingChannel -> IO (GatewayHandle, ThreadId)
+startGatewayThread auth intent eventChannel log = do
+  events <- atomically $ dupTChan eventChannel
+  sends <- newTChanIO
+  status <- newTVarIO Nothing
+  seqid <- newTVarIO 0
+  seshid <- newTVarIO ""
+  host <- newTVarIO "gateway.discord.gg"
   let gatewayHandle = GatewayHandle events sends status seqid seshid host
   tid <- forkIO $ connectionLoop auth intent gatewayHandle log
   pure (gatewayHandle, tid)

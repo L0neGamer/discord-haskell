@@ -15,23 +15,22 @@ module Discord.Internal.Rest
 
 import Prelude hiding (log)
 import Data.Aeson (FromJSON, eitherDecode)
-import Control.Concurrent.Chan
-import Control.Concurrent.MVar
-import Control.Concurrent (forkIO, ThreadId)
+import UnliftIO
+import UnliftIO.Concurrent
 import qualified Data.ByteString.Lazy as BL
-import qualified Data.Text as T
 
 
 import Discord.Internal.Types
 import Discord.Internal.Rest.HTTP
+import Discord.Internal.Gateway.EventLoop (LoggingChannel)
 
 -- | Handle to the Rest 'Chan'
-data RestChanHandle = RestChanHandle
+newtype RestChanHandle = RestChanHandle
       { restHandleChan :: Chan (String, JsonRequest, MVar (Either RestCallInternalException BL.ByteString))
       }
 
 -- | Starts the http request thread. Please only call this once
-startRestThread :: Auth -> Chan T.Text -> IO (RestChanHandle, ThreadId)
+startRestThread :: Auth -> LoggingChannel -> IO (RestChanHandle, ThreadId)
 startRestThread auth log = do
   c <- newChan
   tid <- forkIO $ restLoop auth c log

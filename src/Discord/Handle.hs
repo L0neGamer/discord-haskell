@@ -4,11 +4,12 @@ module Discord.Handle
   , HandleThreadId(..)
   ) where
 
-import Control.Concurrent (ThreadId, Chan, MVar)
+import Control.Concurrent (ThreadId, MVar)
 import qualified Data.Text as T
 
 import Discord.Internal.Rest (RestChanHandle(..))
 import Discord.Internal.Gateway (GatewayHandle(..), CacheHandle(..))
+import Discord.Internal.Gateway.EventLoop (LoggingChannel)
 
 -- | Thread Ids marked by what type they are
 data HandleThreadId
@@ -32,7 +33,7 @@ data DiscordHandle = DiscordHandle
   , -- | List of the threads currently in use by the library
     discordHandleThreads :: [HandleThreadId]
   , -- | `Chan` used to send messages to the internal logger
-    discordHandleLog :: Chan T.Text
+    discordHandleLog :: LoggingChannel
   , -- | `MVar` containing a description of the latest library error
     discordHandleLibraryError :: MVar T.Text
   }

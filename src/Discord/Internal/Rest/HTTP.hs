@@ -12,11 +12,8 @@ module Discord.Internal.Rest.HTTP
 
 import Prelude hiding (log)
 
-import Control.Monad.IO.Class (liftIO)
-import Control.Concurrent (threadDelay)
-import Control.Exception.Safe (try)
-import Control.Concurrent.MVar
-import Control.Concurrent.Chan
+import UnliftIO
+import UnliftIO.Concurrent
 import Data.Ix (inRange)
 import Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
 import qualified Data.ByteString as B
@@ -30,6 +27,7 @@ import qualified Data.Map.Strict as M
 
 import Discord.Internal.Types
 import Discord.Internal.Rest.Prelude
+import Discord.Internal.Gateway.EventLoop (writeToLog, LoggingChannel)
 
 -- | An exception in a Rest call
 data RestCallInternalException
@@ -43,7 +41,7 @@ data RestCallInternalException
 
 -- | Rest event loop
 restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either RestCallInternalException BL.ByteString))
-                 -> Chan T.Text -> IO ()
+                 -> TQueue T.Text -> IO ()
 restLoop auth urls log = loop M.empty
   where
   loop ratelocker = do
@@ -57,7 +55,7 @@ restLoop auth urls log = loop M.empty
                       reqIO <- try $ restIOtoIO (tryRequest log action)
                       case reqIO :: Either R.HttpException (RequestResponse, Timeout) of
                         Left e -> do
-                          writeChan log ("rest - http exception " <> T.pack (show e))
+                          writeToLog log ("rest - http exception " <> T.pack (show e))
                           putMVar thread (Left (RestCallInternalHttpException e))
                           loop ratelocker
                         Right (resp, retry) -> do
@@ -70,7 +68,7 @@ restLoop auth urls log = loop M.empty
                             ResponseTryAgain -> writeChan urls (route, request, thread)
                           case retry of
                             GlobalWait i -> do
-                                writeChan log ("rest - GLOBAL WAIT LIMIT: "
+                                writeToLog log ("rest - GLOBAL WAIT LIMIT: "
                                                     <> T.pack (show ((i - curtime) * 1000)))
                                 threadDelay $ round ((i - curtime + 0.1) * 1000)
                                 loop ratelocker
@@ -99,7 +97,7 @@ data Timeout = GlobalWait POSIXTime
              | PathWait POSIXTime
              | NoLimit
 
-tryRequest :: Chan T.Text -> RestIO R.LbsResponse -> RestIO (RequestResponse, Timeout)
+tryRequest :: LoggingChannel -> RestIO R.LbsResponse -> RestIO (RequestResponse, Timeout)
 tryRequest _log action = do
   resp <- action
   now <- liftIO getPOSIXTime

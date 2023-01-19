@@ -6,8 +6,7 @@ module Discord.Internal.Gateway.Cache where
 
 import Prelude hiding (log)
 import Control.Monad (forever, join)
-import Control.Concurrent.MVar
-import Control.Concurrent.Chan
+import UnliftIO
 import Data.Foldable (foldl')
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
@@ -24,37 +23,40 @@ data Cache = Cache
      } deriving (Show)
 
 data CacheHandle = CacheHandle
-  { cacheHandleEvents :: Chan (Either GatewayException EventInternalParse)
-  , cacheHandleCache  :: MVar (Either (Cache, GatewayException) Cache)
+  { cacheHandleEvents :: EventChannel
+  , cacheHandleCache  :: TVar (Either (Cache, GatewayException) Cache)
   }
 
-cacheLoop :: Bool -> CacheHandle -> Chan T.Text -> IO ()
-cacheLoop isEnabled cacheHandle log = do
-      ready <- readChan eventChan
+cacheLoop :: Bool -> EventChannel -> TQueue T.Text -> MVar CacheHandle -> IO ()
+cacheLoop isEnabled eventChan log cacheHandleMVar = do
+      ready <- readTChanIO eventChan
       case ready of
         Right (InternalReady _ user _ _ _ _ pApp) -> do
-          putMVar cache (Right (Cache user M.empty M.empty M.empty pApp))
-          loop
+          let actualCache = Right (Cache user M.empty M.empty M.empty pApp)
+          cache' <- newTVarIO actualCache
+          let cacheHandle = CacheHandle eventChan cache'
+          putMVar cacheHandleMVar cacheHandle
+          atomically (loop cacheHandle)
         Right r ->
-          writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
+          writeToLog log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
         Left e ->
-          writeChan log ("cache - stopping cache - gateway exception " <> T.pack (show e))
+          writeToLog log ("cache - stopping cache - gateway exception " <> T.pack (show e))
   where
-  cache     = cacheHandleCache cacheHandle
-  eventChan = cacheHandleEvents cacheHandle
-
-  loop :: IO ()
-  loop = forever $ do
-    eventOrExcept <- readChan eventChan
-    if not isEnabled
-      then return ()
-      else do
-        minfo <- takeMVar cache
-        case minfo of
-          Left nope -> putMVar cache (Left nope)
-          Right info -> case eventOrExcept of
-                          Left e -> putMVar cache (Left (info, e))
-                          Right event -> putMVar cache $! Right $! adjustCache info event
+  loop :: CacheHandle -> STM ()
+  loop ch =
+    let cache = cacheHandleCache ch in
+      forever $ do
+        eventOrExcept <- readTChan eventChan
+        if not isEnabled
+          then return ()
+          else do
+            let 
+            minfo <- readTVar cache
+            case minfo of
+              Left _ -> pure ()
+              Right info -> case eventOrExcept of
+                              Left e -> writeTVar cache (Left (info, e))
+                              Right event -> writeTVar cache $! Right $! adjustCache info event
 
 adjustCache :: Cache -> EventInternalParse -> Cache
 adjustCache minfo event = case event of

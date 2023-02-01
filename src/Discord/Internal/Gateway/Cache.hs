@@ -3,10 +3,10 @@
 -- | Query info about connected Guilds and Channels
 module Discord.Internal.Gateway.Cache where
 
-import Prelude hiding (log)
-import Control.Monad (forever)
-import Control.Concurrent.MVar
-import Control.Concurrent.Chan
+import Prelude
+import Control.Monad
+import Control.Monad.Logger
+import UnliftIO
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
@@ -26,22 +26,21 @@ data CacheHandle = CacheHandle
   , cacheHandleCache  :: MVar (Either (Cache, GatewayException) Cache)
   }
 
-cacheLoop :: CacheHandle -> Chan T.Text -> IO ()
-cacheLoop cacheHandle log = do
+cacheLoop :: MonadIOLog m => CacheHandle -> m ()
+cacheLoop cacheHandle = do
       ready <- readChan eventChan
       case ready of
         Right (InternalReady _ user _ _ _ _ pApp) -> do
           putMVar cache (Right (Cache user M.empty M.empty M.empty pApp))
           loop
         Right r ->
-          writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
+          $(logError) ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
         Left e ->
-          writeChan log ("cache - stopping cache - gateway exception " <> T.pack (show e))
+          $(logError) ("cache - stopping cache - gateway exception " <> T.pack (show e))
   where
   cache     = cacheHandleCache cacheHandle
   eventChan = cacheHandleEvents cacheHandle
 
-  loop :: IO ()
   loop = forever $ do
     eventOrExcept <- readChan eventChan
     minfo <- takeMVar cache

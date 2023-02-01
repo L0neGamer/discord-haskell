@@ -12,29 +12,29 @@ module Discord.Internal.Gateway
   , module Discord.Internal.Types
   ) where
 
-import Prelude hiding (log)
-import Control.Concurrent.Chan (newChan, dupChan, Chan)
-import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
-import Data.IORef (newIORef)
+import Prelude
+import UnliftIO
+import UnliftIO.Concurrent
+import Control.Monad.Random (MonadRandom)
 import qualified Data.Text as T
 
-import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent)
+import Discord.Internal.Types
 import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..))
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..))
 
 -- | Starts a thread for the cache
-startCacheThread :: Chan T.Text -> IO (CacheHandle, ThreadId)
-startCacheThread log = do
-  events <- newChan :: IO (Chan (Either GatewayException EventInternalParse))
-  cache <- newEmptyMVar :: IO (MVar (Either (Cache, GatewayException) Cache))
+startCacheThread :: forall m. MonadUnIOLog m => m (CacheHandle, ThreadId)
+startCacheThread = do
+  events <- newChan :: m (Chan (Either GatewayException EventInternalParse))
+  cache <- newEmptyMVar :: m (MVar (Either (Cache, GatewayException) Cache))
   let cacheHandle = CacheHandle events cache
-  tid <- forkIO $ cacheLoop cacheHandle log
+  tid <- forkIO $ cacheLoop cacheHandle
   pure (cacheHandle, tid)
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received EventsInternalParse to the Chan
-startGatewayThread :: Auth -> GatewayIntent -> CacheHandle -> Chan T.Text -> IO (GatewayHandle, ThreadId)
-startGatewayThread auth intent cacheHandle log = do
+startGatewayThread :: (MonadUnIOLog m, MonadRandom m) => Auth -> GatewayIntent -> CacheHandle -> m (GatewayHandle, ThreadId)
+startGatewayThread auth intent cacheHandle = do
   events <- dupChan (cacheHandleEvents cacheHandle)
   sends <- newChan
   status <- newIORef Nothing
@@ -42,7 +42,7 @@ startGatewayThread auth intent cacheHandle log = do
   seshid <- newIORef ""
   host <- newIORef $ "gateway.discord.gg"
   let gatewayHandle = GatewayHandle events sends status seqid seshid host
-  tid <- forkIO $ connectionLoop auth intent gatewayHandle log
+  tid <- forkIO $ connectionLoop auth intent gatewayHandle
   pure (gatewayHandle, tid)
 
 

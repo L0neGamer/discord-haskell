@@ -5,6 +5,7 @@
 {-# LANGUAGE RankNTypes  #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 -- | Provides base types and utility functions needed for modules in Discord.Internal.Types
 module Discord.Internal.Types.Prelude
@@ -51,6 +52,9 @@ module Discord.Internal.Types.Prelude
   , objectFromMaybes
 
   , ChannelTypeOption (..)
+
+  , MonadIOLog
+  , MonadUnIOLog
   )
 
  where
@@ -66,6 +70,9 @@ import Data.Aeson.Types
 import Data.Time.Clock
 import Data.Time.Clock.POSIX
 import Web.Internal.HttpApiData
+
+import UnliftIO
+import Control.Monad.Logger
 
 import qualified Data.ByteString as B
 import qualified Data.Text as T
@@ -360,3 +367,6 @@ instance ToJSON ChannelTypeOption where
 
 instance FromJSON ChannelTypeOption where
   parseJSON = discordTypeParseJSON "ChannelTypeOption"
+
+type MonadIOLog m = (MonadIO m, MonadLoggerIO m)
+type MonadUnIOLog m = (MonadUnliftIO m, MonadLoggerIO m)
